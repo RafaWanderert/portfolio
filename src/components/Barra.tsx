@@ -40,8 +40,14 @@ export default function Barra() {
           </a>
         ))}
       </nav>
-      <a className="botao botao--pequeno" href={linkWhatsApp(whatsapp.numero, whatsapp.mensagem)}>
+      <a
+        className="botao botao--pequeno"
+        href={linkWhatsApp(whatsapp.numero, whatsapp.mensagem)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {inicio.acao}
+        <span className="so-leitor"> (abre em nova aba)</span>
       </a>
     </div>
   )

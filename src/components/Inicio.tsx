@@ -52,8 +52,14 @@ export default function Inicio() {
           <p className="inicio__papel">{inicio.papel}</p>
           <p className="inicio__texto">{inicio.texto}</p>
           <div className="inicio__acoes">
-            <a className="botao" href={linkWhatsApp(whatsapp.numero, whatsapp.mensagem)}>
+            <a
+              className="botao"
+              href={linkWhatsApp(whatsapp.numero, whatsapp.mensagem)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {inicio.acao}
+              <span className="so-leitor"> (abre em nova aba)</span>
               <Icone nome="seta-direita" />
             </a>
             <a className="link-seta" href="#projetos">
