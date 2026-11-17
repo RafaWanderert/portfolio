@@ -1,0 +1,1685 @@
+@import 'tailwindcss';
+
+/*
+ * Portfólio do Rafael Wanderert.
+ * - Preto e violeta, cantos retos, linhas de 1 px com uma cruzinha "+" nos encontros.
+ * - Três letras: Anton (nome, fundo e números), JetBrains Mono (rótulos "de programador")
+ *   e Instrument Sans (texto corrido). Elas entram pelo src/main.tsx.
+ * - O violeta #6f4bff tem contraste de 3,9:1 sobre o fundo: só entra em letra grande, traço e
+ *   fundo de botão (com texto branco). Texto pequeno colorido usa o violeta claro (10:1).
+ */
+
+/* Fontes do texto de fundo em japonês, coreano e russo: recortes só com as letras da frase
+   (veja scripts/fontes.mjs). "block" evita mostrar a frase numa letra errada por um instante. */
+@font-face {
+  font-family: 'Noto Sans JP Recorte';
+  src: url('./assets/fontes/noto-sans-jp-900-recorte.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Black Han Sans Recorte';
+  src: url('./assets/fontes/black-han-sans-recorte.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Sofia Sans XC Recorte';
+  src: url('./assets/fontes/sofia-sans-extra-condensed-900-recorte.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  /* cores */
+  --fundo: #08070b;
+  --tinta: #f3f0f9;
+  --suave: #9a96a8;
+  /* só para enfeite (3:1 sobre o fundo): não usar em texto */
+  --apagado: #5f5b6e;
+  --linha: rgba(243, 240, 249, 0.14);
+  --roxo: #6f4bff;
+  --roxo-claro: #bcafff;
+  /* o botão roxo escurece um pouco com o mouse em cima (texto branco continua acima de 4,5:1) */
+  --roxo-forte: #5b39e6;
+
+  /* letras */
+  --titulo: 'Anton', Impact, 'Arial Narrow', sans-serif;
+  --mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --sans: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* tamanhos */
+  --t-rotulo: 0.75rem;
+  --t-pequeno: 0.875rem;
+  --t-texto: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --t-secao: clamp(1.125rem, 0.95rem + 0.7vw, 1.5rem);
+
+  /* uma margem igual dos dois lados; em telas muito largas o conteúdo para em 1760px */
+  --margem: max(
+    clamp(16px, 4vw, 80px),
+    calc((100vw - 1760px) / 2),
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
+  --secao: clamp(72px, 8vw, 136px);
+
+  /* sai rápido e assenta devagar (a mesma curva dos outros sites; quase igual à do modelo aprovado) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@theme {
+  --color-*: initial;
+  --color-fundo: #08070b;
+  --color-tinta: #f3f0f9;
+  --color-suave: #9a96a8;
+  --color-roxo: #6f4bff;
+  --color-roxo-claro: #bcafff;
+  --font-*: initial;
+  --font-titulo: 'Anton', Impact, 'Arial Narrow', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-sans: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ============================== Base ============================== */
+html {
+  color-scheme: dark;
+  background: var(--fundo);
+  /* a barra presa (56px) nunca cobre o destino de uma âncora nem o que recebe foco */
+  scroll-padding-top: 72px;
+  -webkit-text-size-adjust: 100%;
+  scrollbar-color: #2c2a36 var(--fundo);
+  /* no celular, o toque num link pisca em violeta (e não no cinza padrão do navegador) */
+  -webkit-tap-highlight-color: rgba(111, 75, 255, 0.28);
+}
+/* com mouse, a página não "estica" ao chegar no fim; no celular, o puxar para atualizar continua */
+@media (pointer: fine) {
+  html {
+    overscroll-behavior: none;
+  }
+}
+/* tira a espera do "toque duplo para dar zoom" em links e botões */
+a,
+button {
+  touch-action: manipulation;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--sans);
+  font-size: var(--t-texto);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+::selection {
+  background: var(--roxo);
+  color: #fff;
+}
+:focus-visible {
+  outline: 2px solid var(--roxo-claro);
+  outline-offset: 3px;
+}
+a {
+  color: inherit;
+}
+/* evita que a última linha de um parágrafo fique com uma palavra sozinha */
+p {
+  text-wrap: pretty;
+}
+
+/* Texto só para leitor de tela */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* "Pular para o conteúdo": aparece só quando recebe foco pelo teclado */
+.pular {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 100;
+  padding: 12px 18px;
+  background: var(--roxo);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.pular:focus-visible {
+  transform: none;
+}
+
+/* Rótulo em letra de código: maiúsculas espaçadas */
+.mono {
+  font-family: var(--mono);
+  font-size: var(--t-rotulo);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.7;
+  text-transform: uppercase;
+}
+
+/* Comentário de código antes dos títulos: "// projetos" */
+.comentario {
+  margin: 0 0 12px;
+  font-family: var(--mono);
+  font-size: var(--t-pequeno);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--roxo-claro);
+}
+
+/* Título de seção: discreto, como no modelo aprovado ("PROJETOS SELECIONADOS") */
+.titulo {
+  margin: 0;
+  font-size: var(--t-secao);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.icone {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+}
+
+/* Cruzinha "+" nos encontros das linhas */
+.cruz {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+}
+.cruz::before,
+.cruz::after {
+  content: '';
+  position: absolute;
+  background: var(--roxo);
+}
+.cruz::before {
+  left: 6px;
+  top: 0;
+  width: 1px;
+  height: 13px;
+}
+.cruz::after {
+  left: 0;
+  top: 6px;
+  width: 13px;
+  height: 1px;
+}
+
+/* Botão principal: roxo cheio, texto branco, cantos retos */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 24px;
+  background: var(--roxo);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.16s var(--ease-out);
+}
+.botao .icone {
+  transition: transform 0.25s var(--ease-out);
+}
+/* o botão afunda de leve ao ser apertado: mostra que o clique foi ouvido */
+.botao:active {
+  transform: scale(0.97);
+}
+.botao--pequeno {
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 0.9375rem;
+}
+/* sobre o bloco roxo, o botão inverte: claro com texto escuro */
+.botao--claro {
+  background: var(--tinta);
+  color: var(--fundo);
+}
+@media (hover: hover) and (pointer: fine) {
+  .botao:hover {
+    background: var(--roxo-forte);
+  }
+  .botao--claro:hover {
+    background: #fff;
+  }
+  .botao:hover .icone {
+    transform: translateX(4px);
+  }
+}
+
+/* Link com seta: a segunda opção ao lado do botão e os links "Ver o site" das fichas */
+.link-seta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(243, 240, 249, 0.38);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 7px;
+  transition: text-decoration-color 0.2s ease;
+}
+.link-seta .icone {
+  color: var(--roxo-claro);
+  transition: transform 0.25s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-seta:hover {
+    text-decoration-color: var(--roxo-claro);
+  }
+  .link-seta:hover .icone {
+    transform: translateY(3px);
+  }
+  .link-seta--fora:hover .icone {
+    transform: translate(2px, -2px);
+  }
+}
+
+/* Etiquetas: só a borda, em letra de código */
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.etiquetas li {
+  padding: 7px 12px;
+  border: 1px solid rgba(243, 240, 249, 0.24);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+/* As partes de cada seção sobem de leve ao entrar na tela, uma vez só.
+   Sem JavaScript (ou se ele falhar), a classe .js sai do <html> e tudo aparece. */
+.js [data-revelar] [data-r] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.7s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.js [data-revelar].visto [data-r] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .js [data-revelar] [data-r] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================== Barra presa ============================== */
+.barra {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 56px;
+  padding: 0 var(--margem);
+  background: var(--fundo);
+  border-bottom: 1px solid var(--linha);
+  transform: translateY(-101%);
+  visibility: hidden;
+  /* some mais rápido do que aparece */
+  transition:
+    transform 0.2s var(--ease-out),
+    visibility 0s 0.2s;
+}
+.barra--visivel {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 0.3s var(--ease-out),
+    visibility 0s;
+}
+.barra__nome {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-right: auto;
+  padding: 12px 0;
+  font-family: var(--mono);
+  font-size: var(--t-rotulo);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.barra__links {
+  display: flex;
+  gap: 28px;
+}
+.barra__links a,
+.inicio__links a {
+  padding: 12px 0;
+  font-family: var(--mono);
+  font-size: var(--t-pequeno);
+  color: var(--suave);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .barra__links a:hover,
+  .inicio__links a:hover {
+    color: var(--tinta);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra,
+  .barra--visivel {
+    transition: none;
+  }
+}
+@media (max-width: 699px) {
+  .barra__links {
+    display: none;
+  }
+}
+
+/* ============================== Primeira tela ============================== */
+.inicio {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  /* ocupa a janela inteira; em telas altas e estreitas (tablet em pé) para antes,
+     para não sobrar um vazio entre o texto do fundo e o nome */
+  min-height: min(100vh, 56.25vw + 380px);
+  min-height: min(100svh, 56.25vw + 380px);
+  padding: 24px var(--margem) 0;
+  border-bottom: 1px solid var(--linha);
+  overflow: hidden;
+  /* as medidas em "cqw" lá dentro são porcentagens da largura útil desta tela */
+  container-type: inline-size;
+}
+
+/* linha do alto: rótulo à esquerda, links e disponibilidade à direita */
+.inicio__alto {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--linha);
+}
+.inicio__alto p {
+  margin: 0;
+}
+.inicio__rotulo b {
+  font-weight: 500;
+  color: var(--roxo-claro);
+}
+.inicio__direita {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(20px, 3.4vw, 56px);
+}
+.inicio__links {
+  display: flex;
+  gap: 24px;
+  margin-top: -11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.inicio__disponivel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.inicio__disponivel .icone {
+  width: 12px;
+  height: 12px;
+  color: var(--roxo);
+}
+.inicio__alto .cruz:nth-of-type(1) {
+  left: -6px;
+  bottom: -7px;
+}
+.inicio__alto .cruz:nth-of-type(2) {
+  right: -6px;
+  bottom: -7px;
+}
+
+/* Texto gigante do fundo. O tamanho da letra sai de duas contas, e vale a menor:
+   - largura: a linha mais larga (--l, em "em") ocupa a largura útil da tela;
+   - altura: as duas linhas (--a, em "em") ocupam 56% da altura da janela.
+   --l muda a cada idioma (o JavaScript ajusta); o valor daqui é o do português
+   e precisa ser igual ao de src/content/idiomas.ts. */
+.fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.fundo__texto {
+  --l: 5.97;
+  --a: 2.12;
+  --k: 1;
+  position: absolute;
+  left: var(--margem);
+  top: 100px;
+  margin: 0;
+  padding: 0.2em 0 0.08em;
+  font-family: var(--titulo);
+  /* max(--l, 5): frases curtas (inglês, russo) não ficam muito maiores que as outras no celular */
+  font-size: calc(min(100cqw / max(var(--l), 5), 56svh / var(--a)) * var(--k));
+  font-weight: 400;
+  line-height: 0.92;
+  white-space: nowrap;
+  color: transparent;
+  /* o único degradê do site: o roxo escurece para baixo, como na referência */
+  background: linear-gradient(
+    180deg,
+    var(--roxo) 14%,
+    color-mix(in srgb, var(--roxo) 62%, var(--fundo)) 60%,
+    color-mix(in srgb, var(--roxo) 16%, var(--fundo)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.fundo__texto span {
+  display: block;
+}
+.fundo__texto.f-ja {
+  --a: 2.36;
+  font-family: 'Noto Sans JP Recorte', 'Yu Gothic', 'Meiryo', sans-serif;
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+.fundo__texto.f-ko {
+  --a: 2.4;
+  font-family: 'Black Han Sans Recorte', 'Malgun Gothic', sans-serif;
+  line-height: 1.06;
+}
+.fundo__texto.f-ru {
+  font-family: 'Sofia Sans XC Recorte', 'Arial Narrow', Impact, sans-serif;
+  font-weight: 900;
+}
+
+/* códigos dos idiomas: mostram o atual; clicar fixa.
+   Ficam numa faixa livre entre a linha do alto e o texto gigante, para nunca caírem em cima dele. */
+.idiomas {
+  position: absolute;
+  right: calc(var(--margem) - 4px);
+  top: 88px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+}
+.idiomas__codigo {
+  position: relative;
+  min-width: 28px;
+  padding: 8px 4px;
+  font-family: var(--mono);
+  font-size: var(--t-rotulo);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  color: var(--suave);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.idiomas__codigo::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 6px;
+  bottom: 4px;
+  height: 1px;
+  background: var(--roxo);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-out);
+}
+.idiomas__codigo--atual {
+  color: var(--roxo-claro);
+}
+.idiomas__codigo--atual::after {
+  transform: none;
+}
+/* idioma fixado: o traço fica mais grosso, para dar para ver que a troca parou */
+.idiomas__codigo[aria-pressed='true']::after {
+  height: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .idiomas__codigo:hover {
+    color: var(--tinta);
+  }
+}
+
+/* corpo: nome à esquerda, nota no meio, números à direita (o centro é o lugar da foto) */
+.inicio__corpo {
+  position: relative;
+  z-index: 2;
+  align-self: end;
+  display: grid;
+  grid-template-columns: minmax(300px, 36vw) 1fr minmax(210px, 19vw);
+  align-items: end;
+  gap: 3vw;
+  /* em janelas baixas, o nome nunca sobe além da primeira linha do texto de fundo */
+  padding: calc(min(100cqw / 5.97, 56svh / 2.12) * 1.12 + 16px) 0 34px;
+}
+.inicio__id .comentario {
+  margin-bottom: 12px;
+}
+.inicio__nome {
+  margin: 0;
+  font-family: var(--titulo);
+  font-size: clamp(3.5rem, 7.4vw, 8rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 0.94;
+  text-transform: uppercase;
+}
+.inicio__nome span {
+  display: block;
+}
+.inicio__papel {
+  margin: 16px 0 12px;
+  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--roxo-claro);
+}
+.inicio__texto {
+  max-width: 37ch;
+  margin: 0;
+  line-height: 1.6;
+  color: var(--suave);
+}
+.inicio__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 28px;
+  margin-top: 26px;
+}
+.inicio__local {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0 0;
+}
+.inicio__local::before {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--roxo);
+  border-radius: 50%;
+}
+.inicio__nota {
+  justify-self: end;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 9vh;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.inicio__nota .icone {
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  padding: 10px;
+  border: 1px solid var(--roxo);
+  border-radius: 50%;
+  color: var(--roxo-claro);
+}
+.fatos {
+  padding-left: 2vw;
+  border-left: 1px solid var(--linha);
+}
+.fatos li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--linha);
+}
+.fatos li:last-child {
+  border-bottom: 0;
+}
+.fatos b {
+  min-width: 2.3ch;
+  font-family: var(--titulo);
+  font-size: clamp(2rem, 3.3vw, 3.375rem);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--roxo);
+}
+.fatos .mono {
+  line-height: 1.55;
+  color: var(--suave);
+}
+
+/* Entre o celular e o computador: sem a nota do meio */
+@media (max-width: 1099px) {
+  .inicio__corpo {
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 26vw);
+    gap: 5vw;
+  }
+  .inicio__nota {
+    display: none;
+  }
+  .fatos {
+    padding-left: 4vw;
+  }
+}
+
+/* Celular: tudo numa coluna. O texto do fundo fica no alto, do tamanho da largura. */
+@media (max-width: 699px) {
+  .inicio {
+    grid-template-rows: auto auto auto 1fr;
+    padding-top: 20px;
+  }
+  .inicio__links {
+    display: none;
+  }
+  .inicio__disponivel {
+    justify-content: flex-end;
+    max-width: 25ch;
+    text-align: right;
+    white-space: normal;
+  }
+  /* o texto do fundo ganha um espaço próprio, de altura fixa (43cqw é a frase mais alta):
+     assim o que vem abaixo não pula quando o idioma troca */
+  .fundo {
+    position: relative;
+    inset: auto;
+    height: 43cqw;
+  }
+  .fundo__texto {
+    left: 0;
+    top: 0;
+    padding-top: 0.1em;
+  }
+  .idiomas {
+    position: relative;
+    inset: auto;
+    justify-content: space-between;
+    gap: 0;
+    margin: 0 -4px;
+  }
+  .idiomas__codigo {
+    flex: 1 1 0;
+    min-width: 24px;
+    min-height: 44px;
+    padding: 12px 0;
+    letter-spacing: 0.08em;
+  }
+  .idiomas__codigo::after {
+    left: 22%;
+    right: 22%;
+    bottom: 8px;
+  }
+  .inicio__corpo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+    padding: 10px 0 28px;
+  }
+  .inicio__nome {
+    font-size: min(17vw, 5.5rem);
+  }
+  .inicio__texto {
+    max-width: none;
+  }
+  .inicio__acoes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  /* no celular, os dois caminhos ocupam a largura toda */
+  .inicio__acoes .link-seta {
+    justify-content: center;
+    min-height: 52px;
+    border: 1px solid rgba(243, 240, 249, 0.24);
+    text-decoration: none;
+  }
+  .fatos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 0;
+    border-left: 0;
+    border-top: 1px solid var(--linha);
+  }
+  .fatos li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px 0 0 12px;
+    border-bottom: 0;
+    border-left: 1px solid var(--linha);
+  }
+  .fatos li:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .fatos b {
+    font-size: 2.25rem;
+  }
+}
+
+/* ============================== Projetos (a fita) ============================== */
+.projetos {
+  padding: clamp(40px, 4.4vw, 68px) 0 clamp(56px, 6.4vw, 108px);
+  overflow: hidden;
+  overflow: clip;
+}
+.projetos__topo {
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  padding: 0 var(--margem) 28px;
+}
+.projetos__topo .comentario {
+  margin-bottom: 8px;
+}
+.regua {
+  flex: 1;
+  height: 1px;
+  margin-bottom: 0.8em;
+  background: var(--linha);
+}
+.projetos__dica {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--suave);
+  white-space: nowrap;
+}
+.projetos__dica .icone {
+  width: 14px;
+  height: 14px;
+}
+
+/* A fita. Todos os cartões ocupam a mesma célula e cada um se desloca pela sua posição (--v)
+   em relação ao ativo (--ativo). No arraste, o trilho inteiro acompanha o dedo. */
+.fita {
+  --largura: clamp(300px, 40vw, 660px);
+  --vao: 28px;
+  position: relative;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.fita--arrastando {
+  cursor: grabbing;
+}
+.fita__trilho {
+  --ativo: 0;
+  display: grid;
+  justify-content: center;
+  /* ao soltar o arraste, o trilho volta ao lugar junto com os cartões */
+  transition: transform 0.9s var(--ease-out);
+}
+.fita--arrastando .fita__trilho {
+  transition: none;
+}
+.cartao {
+  --v: 0;
+  position: relative;
+  grid-area: 1 / 1;
+  width: var(--largura);
+  transform: translateX(calc((var(--v) - var(--ativo)) * (var(--largura) + var(--vao))));
+  transition: transform 0.9s var(--ease-out);
+}
+/* antes de o JavaScript montar a fita, a posição de cada cartão é a ordem dele na lista */
+.cartao:nth-child(2) {
+  --v: 1;
+}
+.cartao:nth-child(3) {
+  --v: 2;
+}
+.cartao:nth-child(4) {
+  --v: 3;
+}
+/* Os vizinhos do cartão ativo ficam apagados: a captura em cinza e bem transparente.
+   O nome continua legível (cinza claro), porque o cartão vizinho também é um botão. */
+.cartao__quadro {
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--linha);
+  background: #111018;
+  opacity: 0.34;
+  filter: grayscale(1);
+  transition:
+    opacity 0.5s ease,
+    filter 0.5s ease,
+    border-color 0.5s ease;
+}
+.cartao--ativo .cartao__quadro {
+  border-color: var(--roxo);
+  opacity: 1;
+  filter: none;
+}
+.cartao__quadro img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  pointer-events: none;
+}
+/* o botão é a linha do nome... */
+.cartao__botao {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding-top: 14px;
+  color: var(--suave);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.5s ease;
+}
+/* ...mas a área de clique cobre o cartão inteiro, com a captura */
+.cartao__botao::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.cartao--ativo .cartao__botao {
+  color: var(--tinta);
+  cursor: inherit;
+}
+/* o contorno de foco também vai em volta do cartão inteiro */
+.cartao__botao:focus-visible {
+  outline: none;
+}
+.cartao__botao:focus-visible::after {
+  outline: 2px solid var(--roxo-claro);
+  outline-offset: 6px;
+}
+.cartao__numero {
+  font-family: var(--titulo);
+  font-size: 2.125rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--apagado);
+  transition: color 0.5s ease;
+}
+.cartao--ativo .cartao__numero {
+  color: var(--roxo);
+}
+.cartao__texto {
+  min-width: 0;
+}
+.cartao__nome {
+  display: block;
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.cartao__tipo {
+  display: block;
+  margin-top: 5px;
+  line-height: 1.4;
+  color: var(--suave);
+}
+.cartao__botao .icone {
+  margin-left: auto;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cartao:not(.cartao--ativo):hover .cartao__quadro {
+    opacity: 0.62;
+  }
+  .cartao:not(.cartao--ativo):hover .cartao__botao {
+    color: var(--tinta);
+  }
+}
+
+/* controles: anterior, contador, linha de progresso, pausa e próximo */
+.controles {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 28px var(--margem) 0;
+}
+.controles__botao {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(243, 240, 249, 0.24);
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s var(--ease-out);
+}
+.controles__botao .icone {
+  width: 16px;
+  height: 16px;
+}
+.controles__botao:active {
+  transform: scale(0.94);
+}
+.controles__pausa[aria-pressed='true'] {
+  border-color: var(--roxo);
+  color: var(--roxo-claro);
+}
+@media (hover: hover) and (pointer: fine) {
+  .controles__botao:hover {
+    border-color: var(--roxo);
+    color: var(--roxo-claro);
+  }
+}
+.controles__conta {
+  margin: 0;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: var(--suave);
+}
+.controles__progresso {
+  position: relative;
+  flex: 1;
+  height: 1px;
+  background: var(--linha);
+}
+.controles__progresso i {
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: 100%;
+  height: 3px;
+  background: var(--roxo);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+/* a linha enche em 4 s; quando termina, a fita avança (onAnimationEnd em Projetos.tsx) */
+.controles__progresso i.cheia {
+  animation: encher 4s linear forwards;
+}
+.controles__progresso i.parada {
+  animation-play-state: paused;
+}
+@keyframes encher {
+  to {
+    transform: none;
+  }
+}
+
+/* fichas: com JavaScript, só a do projeto ativo aparece */
+.fichas {
+  padding: clamp(32px, 3.4vw, 52px) var(--margem) 0;
+}
+.ficha {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 4fr) auto;
+  align-items: start;
+  gap: clamp(28px, 4vw, 72px);
+}
+.js .ficha:not(.ficha--ativa) {
+  display: none;
+}
+/* a ficha nova entra com um leve subir. "@starting-style" é o estado de partida de quem acabou
+   de aparecer: por ser uma transição (e não uma animação), cliques seguidos não a fazem piscar */
+.js .ficha--ativa {
+  transition:
+    opacity 0.3s ease,
+    transform 0.35s var(--ease-out);
+}
+@starting-style {
+  .js .ficha--ativa {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.ficha h4 {
+  margin: 0 0 8px;
+  color: var(--suave);
+}
+.ficha__selo {
+  margin: 0 0 18px;
+  color: var(--roxo-claro);
+}
+.ficha__texto p:not(.mono) {
+  max-width: 62ch;
+  margin: 0 0 22px;
+}
+.ficha__texto p:last-child {
+  margin-bottom: 0;
+}
+.ficha__texto .ficha__aviso {
+  padding-left: 14px;
+  border-left: 2px solid var(--roxo);
+  color: var(--suave);
+}
+.ficha__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 28px;
+  margin-top: 22px;
+}
+.ficha__sem {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  color: var(--suave);
+}
+/* moldura da tela de celular (a captura ou o vídeo) */
+.celular {
+  position: relative;
+  width: clamp(150px, 12.5vw, 190px);
+  aspect-ratio: 390 / 844;
+  overflow: hidden;
+  border: 1px solid rgba(243, 240, 249, 0.24);
+  background: #111018;
+}
+.celular img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.demo {
+  margin: 0;
+}
+/* o vídeo original tem a tela do app só no quarto de cima, à esquerda:
+   ele entra com o dobro do tamanho e a moldura mostra só esse pedaço */
+.demo__video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 200%;
+  max-width: none;
+  height: 200%;
+}
+.demo__botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo__botao .icone {
+  width: 16px;
+  height: 16px;
+  color: var(--roxo-claro);
+}
+.demo__legenda {
+  max-width: 190px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--suave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cartao,
+  .cartao__quadro,
+  .cartao__botao,
+  .cartao__numero {
+    transition: none;
+  }
+  .js .ficha--ativa,
+  .fita__trilho {
+    transition: none;
+  }
+}
+
+/* Sem JavaScript (ou se ele falhar): os projetos ficam um embaixo do outro, cada cartão seguido
+   da sua ficha. "display: contents" tira as caixas do caminho e "order" intercala cartões e fichas. */
+html:not(.js) .projetos {
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--margem);
+}
+html:not(.js) .projetos__topo {
+  padding-inline: 0;
+}
+html:not(.js) .projetos__dica,
+html:not(.js) .controles {
+  display: none;
+}
+html:not(.js) .fita,
+html:not(.js) .fita__trilho,
+html:not(.js) .fichas {
+  display: contents;
+}
+html:not(.js) .cartao {
+  width: min(100%, 660px);
+  margin-top: 44px;
+  transform: none;
+}
+html:not(.js) .cartao:first-child {
+  margin-top: 0;
+}
+html:not(.js) .cartao__quadro {
+  opacity: 1;
+  filter: none;
+}
+html:not(.js) .cartao__botao {
+  color: var(--tinta);
+  cursor: default;
+}
+html:not(.js) .cartao__numero {
+  color: var(--roxo);
+}
+html:not(.js) .ficha {
+  margin-top: 22px;
+}
+html:not(.js) .cartao:nth-child(1) {
+  order: 1;
+}
+html:not(.js) .ficha:nth-child(1) {
+  order: 2;
+}
+html:not(.js) .cartao:nth-child(2) {
+  order: 3;
+}
+html:not(.js) .ficha:nth-child(2) {
+  order: 4;
+}
+html:not(.js) .cartao:nth-child(3) {
+  order: 5;
+}
+html:not(.js) .ficha:nth-child(3) {
+  order: 6;
+}
+html:not(.js) .cartao:nth-child(4) {
+  order: 7;
+}
+html:not(.js) .ficha:nth-child(4) {
+  order: 8;
+}
+
+@media (max-width: 1099px) {
+  .ficha {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .ficha__texto {
+    grid-column: 1;
+  }
+  .ficha__lado {
+    grid-column: 1;
+  }
+  .ficha__celular {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+@media (max-width: 699px) {
+  .projetos__topo {
+    flex-wrap: wrap;
+    gap: 6px 22px;
+  }
+  .regua {
+    display: none;
+  }
+  .projetos__dica {
+    width: 100%;
+  }
+  /* um cartão por vez, com a ponta do próximo aparecendo */
+  .fita {
+    --largura: min(82vw, 420px);
+    --vao: 14px;
+  }
+  .controles {
+    gap: 12px;
+  }
+  .ficha {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .ficha__celular {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .celular {
+    width: 190px;
+  }
+}
+
+/* ============================== Faixas de duas colunas ============================== */
+.dupla {
+  --bloco: clamp(56px, 6.4vw, 108px);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(16px, 2vw, 32px);
+  margin: 0 var(--margem);
+  border-top: 1px solid var(--linha);
+}
+.dupla > .cruz:nth-of-type(1),
+.contato > .cruz:nth-of-type(1) {
+  left: -6px;
+  top: -7px;
+}
+.dupla > .cruz:nth-of-type(2),
+.contato > .cruz:nth-of-type(2) {
+  right: -6px;
+  top: -7px;
+}
+.dupla .titulo {
+  margin-bottom: clamp(24px, 2.6vw, 40px);
+}
+
+/* ---- Sobre ---- */
+.sobre {
+  grid-column: 1 / span 5;
+  padding: var(--bloco) 0;
+}
+.sobre__destaque {
+  margin: 0 0 20px;
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+.sobre__texto {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--suave);
+  text-wrap: pretty;
+}
+.sobre__formacao {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 24px;
+  margin: clamp(28px, 3vw, 44px) 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--linha);
+}
+.sobre__formacao dt {
+  padding-top: 3px;
+  color: var(--suave);
+}
+.sobre__formacao dd {
+  margin: 0;
+}
+.sobre__formacao b {
+  display: block;
+  font-weight: 600;
+}
+.sobre__formacao span {
+  color: var(--suave);
+}
+
+/* ---- Habilidades ---- */
+.habilidades {
+  grid-column: 7 / -1;
+  padding: var(--bloco) 0 var(--bloco) clamp(24px, 4vw, 72px);
+  border-left: 1px solid var(--linha);
+}
+.habilidades__grupo {
+  display: grid;
+  grid-template-columns: minmax(120px, 11rem) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px 24px;
+  padding: 18px 0;
+  border-top: 1px solid var(--linha);
+}
+.habilidades__grupo:last-child {
+  border-bottom: 1px solid var(--linha);
+}
+.habilidades__grupo h3 {
+  margin: 0;
+  padding-top: 6px;
+  color: var(--suave);
+}
+
+/* ---- Como trabalho ---- */
+.processo {
+  grid-column: 1 / span 7;
+  padding: var(--bloco) 0;
+}
+.passos li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3rem 44px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 18px;
+  padding-bottom: 26px;
+}
+.passos li:last-child {
+  padding-bottom: 0;
+}
+/* a linha que liga um ícone ao próximo */
+.passos li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: calc(3rem + 18px + 22px);
+  top: 44px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(243, 240, 249, 0.24);
+}
+.passos__numero {
+  font-family: var(--titulo);
+  font-size: 1.75rem;
+  line-height: 44px;
+  color: var(--roxo);
+}
+.passos__icone {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--roxo);
+  border-radius: 50%;
+  color: var(--roxo-claro);
+}
+.passos__icone .icone {
+  width: 20px;
+  height: 20px;
+}
+.passos h3 {
+  margin: 1px 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--roxo-claro);
+}
+.passos p {
+  max-width: 48ch;
+  margin: 0;
+}
+
+/* ---- Chamada: o bloco roxo ---- */
+.chamada {
+  grid-column: 9 / -1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: clamp(28px, 3vw, 48px);
+  background: var(--roxo);
+  color: #fff;
+}
+.chamada__texto {
+  margin: 0;
+  padding-right: 24px;
+  font-size: clamp(1.5rem, 1.05rem + 1.7vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.chamada__texto span {
+  display: block;
+}
+.chamada__texto span + span {
+  margin-top: 0.5em;
+}
+.chamada .botao {
+  align-self: flex-start;
+}
+.chamada :focus-visible {
+  outline-color: #fff;
+}
+.chamada .cruz {
+  right: 18px;
+  top: 18px;
+}
+.chamada .cruz::before,
+.chamada .cruz::after {
+  background: #fff;
+}
+
+@media (max-width: 1099px) {
+  .sobre,
+  .habilidades,
+  .processo,
+  .chamada {
+    grid-column: 1 / -1;
+  }
+  .sobre {
+    padding-bottom: clamp(40px, 6vw, 64px);
+  }
+  .habilidades {
+    padding: 0 0 var(--bloco);
+    border-left: 0;
+  }
+  .processo {
+    padding-bottom: clamp(40px, 6vw, 64px);
+  }
+  .chamada {
+    min-height: 260px;
+    margin-bottom: var(--bloco);
+  }
+}
+@media (max-width: 699px) {
+  .habilidades__grupo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .habilidades__grupo h3 {
+    padding-top: 0;
+  }
+  .passos li {
+    grid-template-columns: 2.25rem 44px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  .passos li:not(:last-child)::before {
+    left: calc(2.25rem + 14px + 22px);
+  }
+}
+
+/* ============================== Contato ============================== */
+.contato {
+  position: relative;
+  margin: 0 var(--margem);
+  padding: clamp(56px, 6.4vw, 108px) 0 clamp(48px, 5vw, 80px);
+  border-top: 1px solid var(--linha);
+  /* "cqw" lá dentro = porcentagem da largura desta seção */
+  container-type: inline-size;
+}
+/* o título ocupa a largura inteira: 7,16 é a largura de "VAMOS CONVERSAR" em "em", medida no navegador */
+.contato__titulo {
+  margin: 0;
+  font-family: var(--titulo);
+  font-size: calc(100cqw / 7.16);
+  font-weight: 400;
+  line-height: 0.92;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* se a fonte não carregar, a reserva é mais larga: o título é cortado em vez de criar rolagem lateral */
+  overflow-x: clip;
+}
+.contato__corpo {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(16px, 2vw, 32px);
+  margin-top: clamp(28px, 3.4vw, 56px);
+}
+.contato__texto {
+  grid-column: 1 / span 4;
+  max-width: 30ch;
+  margin: 0;
+  font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  line-height: 1.45;
+}
+.contato__lista {
+  grid-column: 6 / -1;
+  border-top: 1px solid var(--linha);
+}
+.contato__lista li {
+  border-bottom: 1px solid var(--linha);
+}
+.contato__linha {
+  display: grid;
+  grid-template-columns: 44px minmax(88px, 9rem) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 18px;
+  min-height: 68px;
+  margin: 0;
+  padding: 10px 0;
+  text-decoration: none;
+}
+.contato__icone {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(243, 240, 249, 0.24);
+  border-radius: 50%;
+  color: var(--roxo-claro);
+  transition: border-color 0.2s ease;
+}
+.contato__icone .icone {
+  width: 20px;
+  height: 20px;
+}
+.contato__rotulo {
+  color: var(--suave);
+}
+.contato__valor {
+  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.25rem);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  transition: color 0.2s ease;
+}
+.contato__seta {
+  width: 18px;
+  height: 18px;
+  color: var(--suave);
+  transition:
+    transform 0.25s var(--ease-out),
+    color 0.2s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  a.contato__linha:hover .contato__icone {
+    border-color: var(--roxo);
+  }
+  a.contato__linha:hover .contato__valor,
+  a.contato__linha:hover .contato__seta {
+    color: var(--roxo-claro);
+  }
+  a.contato__linha:hover .contato__seta {
+    transform: translate(2px, -2px);
+  }
+}
+@media (max-width: 1099px) {
+  .contato__texto,
+  .contato__lista {
+    grid-column: 1 / -1;
+  }
+  .contato__texto {
+    margin-bottom: 28px;
+  }
+}
+@media (max-width: 699px) {
+  /* no celular o título vai em duas linhas: 4,3 é a largura de "CONVERSAR" */
+  .contato__titulo {
+    font-size: calc(100cqw / 4.3);
+    white-space: normal;
+  }
+  .contato__titulo span {
+    display: block;
+  }
+  .contato__linha {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    row-gap: 2px;
+    column-gap: 14px;
+  }
+  .contato__icone {
+    grid-row: 1 / span 2;
+  }
+  .contato__rotulo,
+  .contato__valor {
+    grid-column: 2;
+  }
+  .contato__seta {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+}
+
+/* ============================== Rodapé ============================== */
+.rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 32px;
+  margin: 0 var(--margem);
+  padding: 12px 0 24px;
+  border-top: 1px solid var(--linha);
+  color: var(--suave);
+}
+.rodape p {
+  margin: 0;
+}
+.rodape a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--tinta);
+  text-decoration: none;
+}
+.rodape .icone {
+  width: 14px;
+  height: 14px;
+  color: var(--roxo-claro);
+  transition: transform 0.25s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rodape a:hover {
+    color: var(--roxo-claro);
+  }
+  .rodape a:hover .icone {
+    transform: translateY(-3px);
+  }
+}

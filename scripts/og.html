@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Imagem de compartilhamento (o scripts/capturas.mjs tira a foto desta página em 1200×630)</title>
+    <style>
+      @font-face {
+        font-family: 'Anton';
+        src: url('../node_modules/@fontsource/anton/files/anton-latin-400-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Mono';
+        src: url('../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 100 800;
+      }
+      @font-face {
+        font-family: 'Sans';
+        src: url('../node_modules/@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 400 700;
+      }
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        position: relative;
+        overflow: hidden;
+        background: #08070b;
+        color: #f3f0f9;
+        font-family: 'Sans', sans-serif;
+      }
+      .topo {
+        position: absolute;
+        left: 56px;
+        right: 56px;
+        top: 30px;
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 14px;
+        border-bottom: 1px solid rgba(243, 240, 249, 0.14);
+        font: 500 15px/1.6 'Mono', monospace;
+        letter-spacing: 0.14em;
+      }
+      .topo b {
+        color: #bcafff;
+        font-weight: 500;
+      }
+      .fundo {
+        position: absolute;
+        left: 56px;
+        top: 84px;
+        font: 400 180px/0.92 'Anton', sans-serif;
+        white-space: nowrap;
+        padding: 0.2em 0 0.08em;
+        background: linear-gradient(180deg, #6f4bff 14%, #4930a6 60%, #181231 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .id {
+        position: absolute;
+        left: 56px;
+        bottom: 40px;
+      }
+      .ola {
+        margin: 0 0 10px;
+        font: 500 18px 'Mono', monospace;
+        color: #bcafff;
+      }
+      h1 {
+        margin: 0;
+        font: 400 108px/0.94 'Anton', sans-serif;
+        letter-spacing: 0.01em;
+      }
+      .papel {
+        margin: 16px 0 0;
+        font: 600 23px 'Sans', sans-serif;
+        letter-spacing: 0.07em;
+        color: #bcafff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topo"><span><b>PORTFÓLIO</b> · SITES E SISTEMAS</span><span>BIGUAÇU · SC</span></div>
+    <div class="fundo">DESENVOLVEDOR<br />DE SOFTWARE</div>
+    <div class="id">
+      <p class="ola">// olá, eu sou</p>
+      <h1>RAFAEL<br />WANDERERT</h1>
+      <p class="papel">SITES E SISTEMAS SOB MEDIDA</p>
+    </div>
+  </body>
+</html>
