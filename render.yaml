@@ -1,0 +1,44 @@
+# Render: site estático (grátis, não dorme). O Render lê este arquivo ao criar o Blueprint.
+services:
+  - type: web
+    runtime: static
+    name: rafaelwanderert
+    branch: main
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    # Domínio próprio (registrado no Registro.br, que também cuida do DNS). O Render acrescenta o www
+    # sozinho, levando para o endereço sem www, e cria o certificado do https. Tem de ser o mesmo
+    # domínio de "url" em src/content/site.ts (o teste confere).
+    domains:
+      - rafaelwanderert.com.br
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+    headers:
+      # Só roda o que é do próprio site (+ o script inline do <head>, pelo hash).
+      # O build confere este valor (scripts/prerender.mjs) e avisa se estiver desatualizado.
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'sha256-4TqP1UqMxeWrd10OlhIJSapVgY0QjQG8hn1tgWhpuVo='; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

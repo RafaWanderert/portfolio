@@ -1,0 +1,31 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Arquivos de trabalho do design e saídas temporárias
+.taste-skill
+.playwright-cli
+.impeccable
+.env
+
+# Desenho, plano e modelos: ficam só no PC. A pasta do modelo tem capturas de
+# sites de clientes que ainda não aprovaram aparecer, e o repositório é público.
+docs/superpowers/
+.superpowers/
+
+# Prints para conferir
+prints/
+.claude/
+skills-lock.json

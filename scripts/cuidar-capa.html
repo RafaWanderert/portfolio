@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Capa do Cuidar (o scripts/capturas.mjs tira a foto desta página)</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      /* Verde do app (#1e6b57) com três telas do celular lado a lado */
+      body {
+        background: #1e6b57;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 56px;
+        overflow: hidden;
+      }
+      .tela {
+        position: relative;
+        width: 324px;
+        aspect-ratio: 390 / 844;
+        overflow: hidden;
+        border-radius: 30px;
+        background: #f3f3ee;
+        outline: 8px solid #0f3d32;
+      }
+      .tela:nth-child(odd) {
+        transform: translateY(26px);
+      }
+      .tela:nth-child(even) {
+        transform: translateY(-26px);
+      }
+      /* O vídeo original tem a tela do app só no quarto de cima, à esquerda (o resto é cinza):
+         o vídeo entra com o dobro do tamanho e a moldura mostra só esse pedaço. */
+      .tela video {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 200%;
+        height: 200%;
+      }
+      /* ?uma: só a primeira tela, sem moldura, para a capa do vídeo na ficha */
+      body.uma {
+        background: #f3f3ee;
+        gap: 0;
+      }
+      body.uma .tela {
+        width: 100vw;
+        border-radius: 0;
+        outline: 0;
+        transform: none;
+      }
+      body.uma .tela:not(:first-child) {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- data-t: o segundo do vídeo que aparece em cada tela (escala, recado e trocas) -->
+    <div class="tela"><video src="../src/assets/projetos/cuidar-demo.mp4" muted preload="auto" data-t="2.5"></video></div>
+    <div class="tela"><video src="../src/assets/projetos/cuidar-demo.mp4" muted preload="auto" data-t="13.5"></video></div>
+    <div class="tela"><video src="../src/assets/projetos/cuidar-demo.mp4" muted preload="auto" data-t="16.5"></video></div>
+    <script>
+      if (new URLSearchParams(location.search).has('uma')) document.body.classList.add('uma')
+    </script>
+  </body>
+</html>
