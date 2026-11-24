@@ -6,7 +6,7 @@ import { problemasParaPublicar } from '../lib/publicacao.ts'
 import { linkWhatsApp } from '../lib/whatsapp.ts'
 import { idiomas } from './idiomas.ts'
 import { projetos } from './projetos.ts'
-import { comoTrabalho, contatos, fatos, habilidades, pendencias, perguntas, rodape, seo, site, whatsapp } from './site.ts'
+import { comoTrabalho, contatos, fatos, fatosConferidosEm, habilidades, pendencias, perguntas, rodape, seo, site, whatsapp } from './site.ts'
 
 describe('projetos', () => {
   it('são os 3 combinados, na ordem da fita', () => {
@@ -60,6 +60,11 @@ describe('site', () => {
   it('mostra 3 números, todos só com dígitos', () => {
     expect(fatos).toHaveLength(3)
     for (const f of fatos) expect(f.valor).toMatch(/^\d{2,3}$/)
+  })
+
+  it('os números conferidos em 24/11/2026: 11 projetos, 4 sites no ar, Lighthouse 100', () => {
+    expect(fatos.map((f) => f.valor)).toEqual(['11', '04', '100'])
+    expect(fatosConferidosEm).toBe('2026-11-24')
   })
 
   it('tem o LinkedIn e o GitHub que o Rafa confirmou', () => {

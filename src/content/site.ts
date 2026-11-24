@@ -95,21 +95,22 @@ export const inicio = {
 /**
  * Os três números da primeira tela. Todos são reais e precisam ser conferidos de novo
  * no dia de publicar:
- * - projetos construídos: os 3 da fita (Amabile, Cuidar e Helena Mendes), o GA-2100 (saiu da
- *   fita em 17/11/2026, mas continua sendo um projeto feito; se o Rafa preferir não contar,
- *   o número vira 07) e 4 prévias de clientes que ainda não aprovaram aparecer (os nomes ficam
- *   nas anotações do Rafa, fora deste repositório público);
- * - sites no ar: Amabile, Helena Mendes e Cuidar;
- * - nota de desempenho deste site no Lighthouse, medida depois do build. Em 16/11/2026, no PC
- *   (npm run servir + Edge): 100 no celular e 100 no computador. Meça de novo com o site no ar;
- *   se não der 100, entra o número real ou o item sai.
+ * - projetos construídos (11 em 24/11/2026): os 3 da fita (Amabile, Cuidar e Helena Mendes),
+ *   o GA-2100, este portfólio, 4 prévias de clientes que ainda não aprovaram aparecer (os nomes
+ *   ficam nas anotações do Rafa, fora deste repositório público) e 2 ferramentas de trabalho do
+ *   Rafa (o Rafa decidiu contá-las em 24/11/2026);
+ * - sites no ar (4 em 24/11/2026, todos respondendo): Amabile, Helena Mendes, Cuidar e este
+ *   portfólio;
+ * - nota de desempenho deste site no Lighthouse. Em 24/11/2026, no site no ar (Lighthouse 13,
+ *   Edge): 100 no celular e 100 no computador em desempenho, acessibilidade e boas práticas.
+ *   Se não der 100 numa nova medição, entra o número real ou o item sai.
  */
 export const fatos: { valor: string; rotulo: [string, string] }[] = [
-  { valor: '08', rotulo: ['Projetos', 'construídos'] },
-  { valor: '03', rotulo: ['Sites', 'no ar'] },
+  { valor: '11', rotulo: ['Projetos', 'construídos'] },
+  { valor: '04', rotulo: ['Sites', 'no ar'] },
   { valor: '100', rotulo: ['Nota no', 'Lighthouse'] },
 ]
-export const fatosConferidosEm = '2026-11-16'
+export const fatosConferidosEm = '2026-11-24'
 
 export const sobre = {
   titulo: 'Sobre',
