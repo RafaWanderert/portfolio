@@ -149,7 +149,7 @@ if (roda('geral')) {
     checa(`${tag} sem bloqueio da CSP`, r.csp.length === 0, r.csp.join(' | '))
     checa(`${tag} sem erro no console`, page.erros.length === 0, page.erros.join(' | '))
     if (tela.width === 1440) {
-      checa(`${tag} fora do Google (noindex)`, r.robots === 'noindex, nofollow', r.robots)
+      checa(`${tag} aberto ao Google (index, follow)`, r.robots === 'index, follow', r.robots)
       const html = await page.eval(`fetch(location.href).then((r) => r.text())`)
       checa(`${tag} HTML do servidor sem style="..."`, !/<[a-z][^>]*\sstyle="/i.test(html))
       checa(`${tag} HTML do servidor já traz o conteúdo`, html.includes('Wanderert</') && html.includes('Vamos'))

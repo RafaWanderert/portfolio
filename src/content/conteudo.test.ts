@@ -160,6 +160,11 @@ describe('site', () => {
     expect(pendencias.some((p) => p.includes('domínio'))).toBe(provisorio)
   })
 
+  it('está publicado e aberto ao Google (o Rafa aprovou em 24/11/2026)', () => {
+    expect(site.publicado).toBe(true)
+    expect(seo.robots).toBe('index, follow')
+  })
+
   it('fica fora do Google enquanto não for publicado', () => {
     expect(seo.robots).toBe(site.publicado ? 'index, follow' : 'noindex, nofollow')
   })

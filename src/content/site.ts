@@ -17,8 +17,9 @@ export const site = {
    * false = prévia: a página sai com "noindex" e fica fora do Google.
    * Só troque para true depois que o Rafa aprovar. O build confere antes se não falta nada
    * (veja "pendencias" no fim deste arquivo e src/lib/publicacao.ts).
+   * Publicado com o OK do Rafa em 24/11/2026.
    */
-  publicado: false,
+  publicado: true,
 }
 
 export const seo: Record<'nome' | 'titulo' | 'descricao' | 'url' | 'robots', string> = {
@@ -277,6 +278,5 @@ export const rodape = {
 }
 
 /** O que falta no site como um todo antes de publicar (os contatos e os projetos têm as suas). */
-export const pendencias: string[] = [
-  'conferir de novo os três números da primeira tela ("fatos") no dia de publicar',
-]
+// Os três números da primeira tela foram conferidos no dia de publicar (24/11/2026).
+export const pendencias: string[] = []
