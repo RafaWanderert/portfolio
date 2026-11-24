@@ -3,7 +3,7 @@
 // Uso: npm run build, npm run servir (deixe rodando) e, em outro terminal:
 //      node scripts/teste-navegador.mjs                         (tudo)
 //      node scripts/teste-navegador.mjs http://localhost:4190/ fita   (só um grupo)
-// Grupos: geral, inicio, fita, secoes. Sai com código 1 se alguma checagem falhar.
+// Grupos: geral, inicio, fita, secoes, demo, botoes, perguntas. Sai com código 1 se alguma checagem falhar.
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -43,9 +43,22 @@ const N = PROJETOS.length
 
 const browser = await Browser.launch({ width: 1440, height: 900 })
 
-/** Abre a página numa tela nova e passa a anotar erros do console e bloqueios da CSP. */
-async function abrir(tela, { semMovimento = false, semJs = false, semFontes = false } = {}) {
+/**
+ * Abre a página numa tela nova e passa a anotar erros do console e bloqueios da CSP.
+ * "falharUmaVez" (ex.: '*cuidar-720-*'): o primeiro pedido desse endereço cai, como numa rede
+ * que oscila; os seguintes passam. page.pedidos conta quantas vezes ele foi pedido.
+ */
+async function abrir(tela, { semMovimento = false, semJs = false, semFontes = false, falharUmaVez } = {}) {
   const page = await browser.newPage({ ...tela, reducedMotion: semMovimento })
+  if (falharUmaVez) {
+    page.pedidos = 0
+    browser.on(page.sessionId, 'Fetch.requestPaused', ({ requestId }) => {
+      page.pedidos++
+      const fim = page.pedidos === 1 ? page.send('Fetch.failRequest', { requestId, errorReason: 'ConnectionReset' }) : page.send('Fetch.continueRequest', { requestId })
+      fim.catch(() => {})
+    })
+    await page.send('Fetch.enable', { patterns: [{ urlPattern: falharUmaVez }] })
+  }
   page.erros = page.consoleErrors
   browser.on(page.sessionId, 'Runtime.consoleAPICalled', (p) => {
     if (p.type === 'error') page.erros.push(p.args.map((a) => a.value ?? a.description ?? '').join(' ').slice(0, 300))
@@ -88,8 +101,10 @@ async function clicar(page, seletor) {
 const afastarMouse = (page) => mouse(page, 'mouseMoved', 2, 2)
 
 const tecla = async (page, key) => {
-  const code = { ArrowRight: 39, ArrowLeft: 37 }[key]
-  await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key, windowsVirtualKeyCode: code })
+  const code = { ArrowRight: 39, ArrowLeft: 37, Enter: 13 }[key]
+  // Enter precisa do caractere (\r) para o navegador "apertar" o elemento focado, como um teclado de verdade
+  const texto = key === 'Enter' ? { text: '\r' } : {}
+  await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key, windowsVirtualKeyCode: code, ...texto })
   await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code: key, windowsVirtualKeyCode: code })
 }
 
@@ -466,6 +481,29 @@ if (roda('fita')) {
     await page.close()
   }
 
+  // Rede que oscila: o primeiro pedido da captura do Cuidar cai. O cartão não pode ficar vazio
+  // (foi o que aconteceu no site no ar em 18/11/2026: o quadro preto até recarregar a página).
+  {
+    const page = await abrir({ width: 1440, height: 900 }, { falharUmaVez: '*cuidar-720-*' })
+    await page.eval(`document.querySelector('#projetos').scrollIntoView({ block: 'start', behavior: 'instant' })`)
+    await clicar(page, '.controles__pausa')
+    await afastarMouse(page)
+    await sleep(7000)
+    const r = await page.eval(`(() => {
+      const vistos = [...document.querySelectorAll('.cartao[data-projeto="cuidar"]')].filter((c) => {
+        const b = c.getBoundingClientRect();
+        return b.right > 0 && b.left < innerWidth;
+      });
+      return vistos.map((c) => { const i = c.querySelector('img'); return { v: c.style.getPropertyValue('--v'), carregou: i.complete && i.naturalWidth > 0 }; });
+    })()`)
+    checa(
+      '[fita] se a captura falha uma vez, o cartão pede de novo e a imagem aparece',
+      page.pedidos >= 2 && r.length > 0 && r.every((c) => c.carregou),
+      JSON.stringify({ pedidos: page.pedidos, cartoes: r }),
+    )
+    await page.close()
+  }
+
   // Celular: um cartão por vez, com a ponta do próximo, e a ficha empilhada
   {
     const page = await abrir({ width: 390, height: 844, dsf: 2, mobile: true }, { semMovimento: true })
@@ -496,10 +534,12 @@ if (roda('secoes')) {
       sobre: document.querySelector('#sobre')?.textContent ?? '',
       grupos: document.querySelectorAll('#habilidades .habilidades__grupo').length,
       etiquetas: document.querySelectorAll('#habilidades .etiquetas li').length,
-      passos: [...document.querySelectorAll('#como-trabalho .passos > li h3')].map((h) => h.textContent.trim()),
-      chamada: document.querySelector('.chamada a')?.href ?? '',
+      passos: [...document.querySelectorAll('#como-trabalho .etapa__titulo')].map((h) => h.textContent.trim()),
+      chamada: document.querySelector('#como-trabalho .estudio__acoes a')?.href ?? '',
       links,
       contatoTitulo: document.querySelector('#contato h2')?.textContent.replace(/\\s+/g, ' ').trim(),
+      contatoTam: parseFloat(getComputedStyle(document.querySelector('#contato h2')).fontSize),
+      sobreTam: parseFloat(getComputedStyle(document.querySelector('#sobre h2')).fontSize),
       rodape: document.querySelector('footer')?.textContent ?? '',
       topo: document.querySelector('footer a[href="#inicio"]')?.textContent.trim(),
       dados: (() => { try { return JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent); } catch { return null; } })(),
@@ -509,8 +549,9 @@ if (roda('secoes')) {
   checa('[secoes] o Sobre traz o texto do Rafa e a formação', r.sobre.includes('Me chamo Rafael') && r.sobre.includes('Uniasselvi'), r.sobre.slice(0, 80))
   checa('[secoes] 4 grupos e 18 tecnologias', r.grupos === 4 && r.etiquetas === 18, `${r.grupos} grupos, ${r.etiquetas} etiquetas`)
   checa('[secoes] 5 passos, na ordem', igual(r.passos, ['Conversa', 'Rascunho', 'Ajustes', 'Desenvolvimento', 'No ar']), JSON.stringify(r.passos))
-  checa('[secoes] a chamada leva ao WhatsApp', r.chamada.startsWith('https://wa.me/5548984502000?text='), r.chamada)
+  checa('[secoes] "Pedir um site" do Como trabalho leva ao WhatsApp', r.chamada.startsWith('https://wa.me/5548984502000?text='), r.chamada)
   checa('[secoes] título do contato', r.contatoTitulo === 'Vamos conversar', r.contatoTitulo)
+  checa('[secoes] título do contato no tamanho dos outros títulos', r.contatoTam === r.sobreTam, `${r.contatoTam}px x ${r.sobreTam}px`)
   checa(
     '[secoes] contato tem WhatsApp, e-mail, GitHub e LinkedIn',
     r.links.some((l) => l.startsWith('https://wa.me/5548984502000')) &&
@@ -527,6 +568,391 @@ if (roda('secoes')) {
   )
   checa('[secoes] sem erro no console', page.erros.length === 0, page.erros.join(' | '))
   await page.close()
+}
+
+// ------------------------------------------------------------------ demonstração (Como trabalho)
+if (roda('demo')) {
+  const estado = (page) =>
+    page.eval(`(() => {
+      const j = document.querySelector('#como-trabalho .janela');
+      return {
+        passo: j?.dataset.passo, cor: j?.dataset.cor, letra: j?.dataset.letra,
+        endereco: j?.querySelector('.janela__endereco span')?.textContent,
+        balao: j?.querySelector('.balao--cliente')?.textContent,
+        titulo: j?.querySelector('.ms__titulo')?.textContent,
+        negrito: !!j?.querySelector('.ms__titulo b'),
+        ativo: document.querySelector('#como-trabalho [aria-current="step"]')?.dataset.etapa,
+        pedido: document.querySelector('#como-trabalho .estudio__acoes a')?.href ?? '',
+        pausa: document.querySelector('#como-trabalho .estudio__pausa')?.textContent.trim() ?? null,
+      };
+    })()`)
+  /** Apaga o campo do nome e digita de verdade (como o teclado). */
+  const escrever = async (page, texto) => {
+    await page.eval(`(() => {
+      const i = document.querySelector('#como-trabalho input[type="text"]');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, '');
+      i.dispatchEvent(new Event('input', { bubbles: true }));
+      i.focus();
+    })()`)
+    await page.send('Input.insertText', { text: texto })
+    await sleep(150)
+  }
+
+  // sem movimento nada anda sozinho: dá para conferir cada clique
+  {
+    const page = await abrir({ width: 1440, height: 900 }, { semMovimento: true })
+    let e = await estado(page)
+    checa('[demo] começa na conversa, em about:blank', e.passo === '1' && e.endereco === 'about:blank' && e.ativo === '1', JSON.stringify(e))
+    checa('[demo sem movimento] sem botão de pausa', e.pausa === null, e.pausa)
+    await escrever(page, 'Padaria do Zé')
+    e = await estado(page)
+    checa('[demo] o nome entra na conversa', !!e.balao?.includes('meu negócio: Padaria do Zé.'), e.balao)
+    checa('[demo] o pedido pelo WhatsApp leva o nome', decodeURIComponent(e.pedido).includes('quero um site para o meu negócio: Padaria do Zé.'), e.pedido)
+    const balao = await page.eval(`getComputedStyle(document.querySelector('#como-trabalho .balao--cliente')).borderTopStyle`)
+    checa('[demo] o balão do cliente tem contorno', balao === 'solid', balao)
+    // os ajustes ficam sempre à mão, embaixo da janela; escolher antes do passo 3 leva a ele
+    const lugar = await page.eval(`(() => {
+      const j = document.querySelector('#como-trabalho .janela').getBoundingClientRect();
+      const c = document.querySelector('#como-trabalho .estudio__controles').getBoundingClientRect();
+      const naColunaDaJanela = c.left >= j.left - 1 && c.right <= j.right + 1;
+      return { abaixoDaJanela: c.top >= j.bottom - 1 && naColunaDaJanela, visivel: c.height > 0 && c.top - j.bottom < 160 };
+    })()`)
+    checa('[demo] os ajustes ficam embaixo da janela, sempre à mostra', lugar.abaixoDaJanela && lugar.visivel, JSON.stringify(lugar))
+    await clicar(page, '#como-trabalho .amostra[data-cor="rosa"]')
+    await sleep(300)
+    e = await estado(page)
+    checa('[demo] escolher a cor no passo 1 leva aos Ajustes', e.passo === '3' && e.cor === 'rosa' && e.ativo === '3', JSON.stringify(e))
+    await clicar(page, '#como-trabalho [data-etapa="2"]')
+    await sleep(300)
+    e = await estado(page)
+    checa('[demo] Rascunho: passo 2, em localhost', e.passo === '2' && e.endereco === 'localhost:5173' && e.ativo === '2', JSON.stringify(e))
+    const traco = await page.eval(`(() => {
+      const j = document.querySelector('#como-trabalho .janela');
+      const estilo = (s) => getComputedStyle(j.querySelector(s));
+      return { botao: estilo('.ms__botao').outlineStyle, topo: estilo('.ms__topo').borderBottomStyle, x: estilo('.ms__x').stroke };
+    })()`)
+    checa(
+      '[demo] Rascunho: caixas tracejadas e o X no lugar da imagem',
+      traco.botao === 'dashed' && traco.topo === 'dashed' && traco.x !== 'none',
+      JSON.stringify(traco),
+    )
+    await clicar(page, '#como-trabalho [data-etapa="3"]')
+    await sleep(400)
+    await clicar(page, '#como-trabalho .amostra[data-cor="verde"]')
+    await sleep(100)
+    await clicar(page, '#como-trabalho .opcao[data-letra="marcante"]')
+    await sleep(100)
+    e = await estado(page)
+    checa('[demo] Ajustes: a cor e a letra escolhidas mudam a janela', e.passo === '3' && e.cor === 'verde' && e.letra === 'marcante', JSON.stringify(e))
+    // cantos, fundo e a letra serifada: a página muda de cara (e a fonte nova chega de verdade)
+    await clicar(page, '#como-trabalho .amostra[data-cantos="redondos"]')
+    await sleep(100)
+    await clicar(page, '#como-trabalho .amostra[data-fundo="escuro"]')
+    await sleep(100)
+    await clicar(page, '#como-trabalho .opcao[data-letra="classica"]')
+    await sleep(600)
+    const aj = await page.eval(`(async () => {
+      await document.fonts.ready;
+      const j = document.querySelector('#como-trabalho .janela');
+      const botao = j.querySelector('.ms__botao');
+      return {
+        passo: j.dataset.passo, cantos: j.dataset.cantos, fundo: j.dataset.fundo, letra: j.dataset.letra,
+        raio: parseFloat(getComputedStyle(botao).borderTopLeftRadius), altura: botao.getBoundingClientRect().height,
+        papel: getComputedStyle(j.querySelector('.janela__pagina')).backgroundColor,
+        titulo: getComputedStyle(j.querySelector('.ms__titulo')).fontFamily,
+        fonte: [...document.fonts].filter((f) => f.family.replace(/["']/g, '') === 'Instrument Serif').map((f) => f.status),
+      };
+    })()`)
+    checa(
+      '[demo] Ajustes: redondos, escuro e clássica mudam a página',
+      aj.passo === '3' && aj.cantos === 'redondos' && aj.fundo === 'escuro' && aj.letra === 'classica' &&
+        aj.raio >= aj.altura / 2 - 0.5 && aj.papel === 'rgb(27, 26, 33)' &&
+        aj.titulo.includes('Instrument Serif') && aj.fonte.includes('loaded'),
+      JSON.stringify(aj),
+    )
+    await clicar(page, '#como-trabalho [data-etapa="2"]')
+    await sleep(600)
+    const papel = await page.eval(`getComputedStyle(document.querySelector('#como-trabalho .janela__pagina')).backgroundColor`)
+    checa('[demo] Rascunho continua no papel branco com o fundo escuro escolhido', papel === 'rgb(255, 255, 255)', papel)
+    await clicar(page, '#como-trabalho [data-etapa="4"]')
+    await sleep(300)
+    const codigo = await page.eval(`document.querySelector('#como-trabalho .janela__codigo')?.textContent ?? ''`)
+    checa(
+      '[demo] Desenvolvimento: o código traz o nome e as quatro escolhas',
+      ['Padaria do Zé', '#15803d', 'Instrument Serif', '999px', '#1b1a21'].every((v) => codigo.includes(v)),
+      codigo.slice(0, 160),
+    )
+    await clicar(page, '#como-trabalho [data-etapa="5"]')
+    await sleep(300)
+    e = await estado(page)
+    checa('[demo] No ar: o endereço vira padariadoze.com.br', e.passo === '5' && e.endereco === 'padariadoze.com.br', JSON.stringify(e))
+    // nome comprido, com acento: o título quebra dentro da página, na Clássica, na Código e no celular do passo 4
+    await escrever(page, 'Confeitaria Ávila & Filhos do Centro')
+    const cabe = () =>
+      page.eval(`(() => {
+        const j = document.querySelector('#como-trabalho .janela');
+        const t = j.querySelector('.ms__titulo').getBoundingClientRect(), c = j.querySelector('.ms__chamada').getBoundingClientRect();
+        const el = j.querySelector('.ms__titulo');
+        return { passo: j.dataset.passo, letra: j.dataset.letra, titulo: Math.round(t.right), chamada: Math.round(c.right), rola: el.scrollWidth - el.clientWidth };
+      })()`)
+    const nomes = [await cabe()]
+    await clicar(page, '#como-trabalho .opcao[data-letra="codigo"]')
+    await sleep(200)
+    nomes.push(await cabe())
+    await clicar(page, '#como-trabalho [data-etapa="4"]')
+    await sleep(300)
+    nomes.push(await cabe())
+    checa(
+      '[demo] nome comprido não vaza do título (Clássica, Código e passo 4)',
+      igual(nomes.map((n) => n.letra), ['classica', 'codigo', 'codigo']) && nomes.every((n) => n.titulo <= n.chamada + 1 && n.rola <= 1),
+      JSON.stringify(nomes),
+    )
+    await escrever(page, '<b>oi</b>')
+    e = await estado(page)
+    checa('[demo] nome com <b> aparece como texto, não como HTML', e.titulo === '<b>oi</b>' && !e.negrito, JSON.stringify(e))
+    checa('[demo] sem erro no console', page.erros.length === 0, page.erros.join(' | '))
+    await page.close()
+  }
+
+  // com movimento: anda sozinha quando a janela aparece, e a pausa segura
+  {
+    const page = await abrir({ width: 1440, height: 900 })
+    await centro(page, '#como-trabalho .janela')
+    await afastarMouse(page)
+    await sleep(4400)
+    let e = await estado(page)
+    checa('[demo] anda sozinha: passo 2 depois de ~3,6 s', e.passo === '2', JSON.stringify(e))
+    await clicar(page, '#como-trabalho .estudio__pausa')
+    await sleep(200)
+    e = await estado(page)
+    checa('[demo] o botão de pausa vira "Continuar"', e.pausa === 'Continuar', e.pausa)
+    await sleep(4000)
+    e = await estado(page)
+    checa('[demo] pausada, não avança', e.passo === '2', JSON.stringify(e))
+
+    // Ajustes sozinho: as quatro trocas no compasso da barrinha de 6 s; a pausa guarda o tempo
+    const aj = () =>
+      page.eval(`(() => { const j = document.querySelector('#como-trabalho .janela'); return { passo: j.dataset.passo, cor: j.dataset.cor, letra: j.dataset.letra, cantos: j.dataset.cantos, fundo: j.dataset.fundo }; })()`)
+    await clicar(page, '#como-trabalho [data-etapa="3"]')
+    await sleep(200)
+    await clicar(page, '#como-trabalho .estudio__pausa')
+    await sleep(2500)
+    let a = await aj()
+    checa(
+      '[demo] Ajustes sozinho: aos 2,5 s, cor café e letra clássica, cantos ainda suaves',
+      a.passo === '3' && a.cor === 'cafe' && a.letra === 'classica' && a.cantos === 'suaves',
+      JSON.stringify(a),
+    )
+    await clicar(page, '#como-trabalho .estudio__pausa')
+    await sleep(2500)
+    const parado = await aj()
+    checa('[demo] pausada no meio dos Ajustes, nada muda', igual(a, parado), JSON.stringify(parado))
+    await clicar(page, '#como-trabalho .estudio__pausa')
+    await sleep(2000)
+    a = await aj()
+    checa(
+      '[demo] continuando, as trocas que faltam vêm no tempo que falta (redondos e creme, ainda no passo 3)',
+      a.passo === '3' && a.cantos === 'redondos' && a.fundo === 'creme',
+      JSON.stringify(a),
+    )
+    await sleep(2000)
+    a = await aj()
+    checa('[demo] a barrinha não recomeça depois da pausa: passo 4 ao fim dos 6 s', a.passo === '4', JSON.stringify(a))
+
+    // parar no passo 3 (clicando nele) e continuar: a barrinha recomeça do zero, e o roteiro junto
+    await clicar(page, '#como-trabalho [data-etapa="1"]')
+    await sleep(200)
+    await clicar(page, '#como-trabalho [data-etapa="3"]')
+    await sleep(200)
+    await clicar(page, '#como-trabalho .estudio__pausa')
+    await sleep(1500)
+    await clicar(page, '#como-trabalho [data-etapa="3"]')
+    await sleep(200)
+    await clicar(page, '#como-trabalho .estudio__pausa')
+    await sleep(1200)
+    a = await aj()
+    checa(
+      '[demo] parar no passo 3 e continuar recomeça o roteiro junto com a barrinha',
+      a.passo === '3' && a.cor === 'cafe' && a.letra === 'moderna',
+      JSON.stringify(a),
+    )
+    checa('[demo] sem erro no console (com movimento)', page.erros.length === 0, page.erros.join(' | '))
+    await page.close()
+  }
+
+  // notebook baixo (1366×768 tem ~658px úteis): a janela não fica presa, senão cor, letra e pausa somem embaixo da tela
+  {
+    const page = await abrir({ width: 1366, height: 658 })
+    const r = await page.eval(`(() => {
+      const v = document.querySelector('#como-trabalho .estudio__janela');
+      return { posicao: getComputedStyle(v).position, altura: Math.round(v.getBoundingClientRect().height), tela: innerHeight };
+    })()`)
+    checa('[demo 1366×658] a janela não fica presa quando não cabe inteira na tela', r.posicao !== 'sticky', JSON.stringify(r))
+    await page.close()
+  }
+
+  // celular: a janela cabe na largura, com a margem do site dos dois lados
+  {
+    const page = await abrir({ width: 390, height: 844, dsf: 2, mobile: true })
+    const r = await page.eval(`(() => { const j = document.querySelector('#como-trabalho .janela').getBoundingClientRect(); return { esq: Math.round(j.left), dir: Math.round(innerWidth - j.right), alt: Math.round(j.height) }; })()`)
+    checa('[demo 390] a janela cabe na largura, com margem dos dois lados', r.esq >= 12 && r.dir >= 12, JSON.stringify(r))
+    const c = await page.eval(`(() => {
+      const direita = [...document.querySelectorAll('#como-trabalho .ajuste')].map((a) => Math.round(a.getBoundingClientRect().right));
+      const letras = [...document.querySelectorAll('#como-trabalho .opcao')].map((o) => Math.round(o.getBoundingClientRect().top));
+      return { direita, limite: innerWidth - 12, letras, vaza: document.documentElement.scrollWidth - innerWidth };
+    })()`)
+    checa(
+      '[demo 390] os quatro grupos cabem, as 4 letras numa linha, sem rolagem lateral',
+      c.direita.length === 4 && c.direita.every((x) => x <= c.limite) && new Set(c.letras).size === 1 && c.vaza <= 0,
+      JSON.stringify(c),
+    )
+    await page.close()
+  }
+}
+
+// ------------------------------------------------------------------ botoes
+// Os botões "Pedir um site" são de vidro escuro: parado, um fio violeta fraco; no mouse, o fio neon
+// (::before) acende e gira; no foco e com "reduzir movimento", ele acende parado.
+if (roda('botoes')) {
+  const BOTAO = '.inicio .botao'
+  /** Como o botão está agora: fundo, texto, sombra e o fio (::before) e a faixa de luz (::after). */
+  const estado = (page, seletor = BOTAO) =>
+    page.eval(`(() => {
+      const b = document.querySelector(${JSON.stringify(seletor)});
+      const s = getComputedStyle(b), fio = getComputedStyle(b, '::before'), luz = getComputedStyle(b, '::after');
+      const rgb = (c) => c.match(/[\\d.]+/g).slice(0, 3).map(Number);
+      const lum = (c) => { const v = rgb(c).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4 }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2] };
+      const fundo = lum(s.backgroundColor), texto = lum(s.color);
+      return {
+        fundo, contraste: (Math.max(fundo, texto) + 0.05) / (Math.min(fundo, texto) + 0.05),
+        sombra: s.boxShadow, existe: fio.content !== 'none' && fio.content !== 'normal', fio: fio.opacity, giro: fio.animationName, luz: luz.display,
+        altura: b.getBoundingClientRect().height, cor: s.backgroundColor, foco: b.matches(':focus-visible'),
+      };
+    })()`)
+
+  {
+    const page = await abrir({ width: 1440, height: 900 })
+    await afastarMouse(page)
+    await sleep(400)
+    const r = await estado(page)
+    checa('[botoes] parado: vidro escuro, texto legível', r.fundo < 0.05 && r.contraste >= 4.5 && r.existe, JSON.stringify(r))
+    checa('[botoes] parado: fio violeta fraco, apagado', r.sombra.includes('rgba(111, 75, 255') && r.fio === '0', JSON.stringify(r))
+    const p = await centro(page, BOTAO)
+    await mouse(page, 'mouseMoved', p.x, p.y)
+    await sleep(400)
+    const h = await estado(page)
+    checa('[botoes] mouse em cima: o fio acende e gira', h.existe && h.fio === '1' && h.giro === 'girar', JSON.stringify(h))
+    const barra = await estado(page, '.barra .botao')
+    checa('[botoes] barra: o botão pequeno também é de vidro', barra.fundo < 0.05 && barra.cor === r.cor && Math.round(barra.altura) === 44, JSON.stringify(barra))
+    await page.close()
+  }
+  {
+    // foco pelo teclado (sem ter usado o mouse, o foco por código conta como de teclado)
+    const page = await abrir({ width: 1440, height: 900 })
+    await page.eval(`document.querySelector(${JSON.stringify(BOTAO)}).focus()`)
+    await sleep(400)
+    const f = await estado(page)
+    checa('[botoes] foco pelo teclado: fio aceso e parado', f.foco && f.existe && f.fio === '1' && f.giro === 'none', JSON.stringify(f))
+    await page.close()
+  }
+  {
+    const page = await abrir({ width: 1440, height: 900 }, { semMovimento: true })
+    const p = await centro(page, BOTAO)
+    await mouse(page, 'mouseMoved', p.x, p.y)
+    await sleep(400)
+    const m = await estado(page)
+    checa('[botoes] reduzir movimento: no mouse o fio fica parado, sem faixa de luz', m.existe && m.fio === '1' && m.giro === 'none' && m.luz === 'none', JSON.stringify(m))
+    await page.close()
+  }
+}
+
+// ------------------------------------------------------------------ perguntas
+// Perguntas frequentes: <details> nativo, todas fechadas; abre com clique e com Enter.
+if (roda('perguntas')) {
+  const info = (page) =>
+    page.eval(`(() => {
+      const d = [...document.querySelectorAll('#perguntas details')];
+      const ordem = [...document.querySelectorAll('main > section, main > div')].map((s) => s.id || s.className);
+      return {
+        ordem, total: d.length, abertas: d.filter((x) => x.open).length,
+        resposta: d[1] ? Math.round(d[1].querySelector('.pergunta__resposta').getBoundingClientRect().height) : -1,
+      };
+    })()`)
+  {
+    const page = await abrir({ width: 1440, height: 900 })
+    const r = await info(page)
+    const i = r.ordem.indexOf('perguntas')
+    checa('[perguntas] a seção vem entre Como trabalho e Contato', i > 0 && r.ordem[i - 1] === 'como-trabalho' && r.ordem[i + 1] === 'contato', JSON.stringify(r.ordem))
+    checa('[perguntas] 6 perguntas, todas fechadas', r.total === 6 && r.abertas === 0, JSON.stringify(r))
+    await clicar(page, '#perguntas details:nth-of-type(2) summary')
+    await sleep(600)
+    const aberta = await info(page)
+    await clicar(page, '#perguntas details:nth-of-type(2) summary')
+    await sleep(600)
+    const fechada = await info(page)
+    checa('[perguntas] clicar abre e mostra a resposta; clicar de novo fecha', aberta.abertas === 1 && aberta.resposta > 0 && fechada.abertas === 0, JSON.stringify({ aberta, fechada }))
+    await page.eval(`document.querySelector('#perguntas details:nth-of-type(3) summary').focus()`)
+    await tecla(page, 'Enter')
+    await sleep(300)
+    const teclado = await page.eval(`document.querySelector('#perguntas details:nth-of-type(3)').open`)
+    checa('[perguntas] teclado: Enter na pergunta focada abre', teclado === true)
+    // as duas cruzinhas ficam nas pontas da linha de cima, como nas outras seções
+    const cruz = await page.eval(`(() => {
+      const s = document.querySelector('#perguntas').getBoundingClientRect();
+      const c = [...document.querySelectorAll('#perguntas > .cruz')].map((e) => e.getBoundingClientRect());
+      return c.map((r) => ({ x: Math.round(r.left + r.width / 2 - (r.left < s.left + s.width / 2 ? s.left : s.right)), y: Math.round(r.top + r.height / 2 - s.top) }));
+    })()`)
+    checa('[perguntas] uma cruzinha em cada ponta da linha de cima', cruz.length === 2 && cruz.every((c) => Math.abs(c.x) <= 1 && Math.abs(c.y) <= 1), JSON.stringify(cruz))
+    const sat = await page.eval(`(() => {
+      const sv = document.querySelector('#perguntas .saturno');
+      if (!sv) return null;
+      const r = sv.getBoundingClientRect(), h = document.querySelector('#perguntas h2').getBoundingClientRect();
+      const l = document.querySelector('#perguntas .perguntas__lista').getBoundingClientRect();
+      return { visivel: getComputedStyle(sv).display !== 'none' && r.width > 100, topo: Math.round(r.top - h.bottom), folga: Math.round(l.left - r.right),
+        corpo: getComputedStyle(sv.querySelector('.saturno__corpo')).animationName, anel: getComputedStyle(sv.querySelector('.saturno__anel')).animationName };
+    })()`)
+    checa('[perguntas] Saturno: aparece no computador, abaixo do título e sem cobrir as perguntas', !!sat && sat.visivel && sat.topo >= 0 && sat.folga > 0, JSON.stringify(sat))
+    checa('[perguntas] Saturno: flutua e o anel balança', !!sat && sat.corpo !== 'none' && sat.anel !== 'none', JSON.stringify(sat))
+    checa('[perguntas] sem erro no console', page.erros.length === 0, page.erros.join(' | '))
+    await page.close()
+  }
+  {
+    const page = await abrir({ width: 1100, height: 800 })
+    const r = await page.eval(`(() => {
+      const sv = document.querySelector('#perguntas .saturno');
+      if (!sv) return null;
+      const a = sv.getBoundingClientRect(), l = document.querySelector('#perguntas .perguntas__lista').getBoundingClientRect();
+      return { largura: Math.round(a.width), folga: Math.round(l.left - a.right), vaza: document.documentElement.scrollWidth - innerWidth };
+    })()`)
+    checa('[perguntas 1100] Saturno visível, sem cobrir as perguntas nem criar rolagem lateral', !!r && r.largura > 100 && r.folga > 0 && r.vaza <= 0, JSON.stringify(r))
+    await page.close()
+  }
+  {
+    const page = await abrir({ width: 390, height: 844, dsf: 2, mobile: true })
+    await clicar(page, '#perguntas details:nth-of-type(3) summary')
+    await sleep(600)
+    const r = await page.eval(`(() => {
+      const sinais = [...document.querySelectorAll('#perguntas .pergunta__sinal')].map((s) => s.getBoundingClientRect().right);
+      return { vaza: document.documentElement.scrollWidth - innerWidth, maior: Math.max(...sinais), limite: innerWidth };
+    })()`)
+    checa('[perguntas 390] sem rolagem lateral e o sinal dentro da tela', r.vaza <= 0 && r.maior <= r.limite - 12, JSON.stringify(r))
+    const escondido = await page.eval(`(() => { const sv = document.querySelector('#perguntas .saturno'); return !!sv && getComputedStyle(sv).display === 'none' })()`)
+    checa('[perguntas 390] Saturno escondido no celular', escondido)
+    await page.close()
+  }
+  {
+    const page = await abrir({ width: 1440, height: 900 }, { semMovimento: true })
+    const d = '#perguntas details:nth-of-type(4)'
+    await clicar(page, `${d} summary`)
+    await sleep(50)
+    const logo = await page.eval(`Math.round(document.querySelector('${d}').getBoundingClientRect().height)`)
+    await sleep(800)
+    const depois = await page.eval(`Math.round(document.querySelector('${d}').getBoundingClientRect().height)`)
+    checa('[perguntas] reduzir movimento: abre sem animação', logo > 0 && logo === depois, `${logo}px → ${depois}px`)
+    const parado = await page.eval(`(() => { const sv = document.querySelector('#perguntas .saturno'); if (!sv) return null; return [getComputedStyle(sv.querySelector('.saturno__corpo')).animationName, getComputedStyle(sv.querySelector('.saturno__anel')).animationName] })()`)
+    checa('[perguntas] Saturno: parado com reduzir movimento', !!parado && parado.every((n) => n === 'none'), JSON.stringify(parado))
+    await page.close()
+  }
 }
 
 await browser.close()

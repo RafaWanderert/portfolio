@@ -1,7 +1,7 @@
 import { contato, contatos, site } from '../content/site.ts'
 import Icone from './Icone.tsx'
 
-/** Contato: o título grande e uma linha para cada canal. O e-mail abre no programa de e-mail; os outros, em nova aba. */
+/** Contato: o título (do tamanho dos outros) e uma linha para cada canal. O e-mail abre no programa de e-mail; os outros, em nova aba. */
 export default function Contato() {
   return (
     <section id="contato" className="contato" aria-labelledby="contato-titulo" data-revelar>
@@ -10,7 +10,7 @@ export default function Contato() {
       <p className="comentario" data-r>
         // contato
       </p>
-      <h2 id="contato-titulo" className="contato__titulo" data-r>
+      <h2 id="contato-titulo" className="titulo" data-r>
         <span>{contato.titulo[0]}</span> <span>{contato.titulo[1]}</span>
       </h2>
       <div className="contato__corpo">

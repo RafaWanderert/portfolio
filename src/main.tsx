@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 // As fontes vêm dos pacotes @fontsource e ficam no próprio site (nada é pedido ao Google).
 import '@fontsource/anton/latin-400.css'
+import '@fontsource/instrument-serif/latin-400.css'
 import '@fontsource-variable/instrument-sans/wght.css'
 import '@fontsource-variable/jetbrains-mono/wght.css'
 import './index.css'

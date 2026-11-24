@@ -1,5 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- As duas barras de um comentário de código (//), em violeta sobre o preto do site -->
-  <rect width="32" height="32" fill="#08070b" />
-  <path d="M13.5 7 8.5 25M23.5 7l-5 18" fill="none" stroke="#7a59ff" stroke-width="3.4" stroke-linecap="square" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-240 -240 480 480">
+  <!-- O Saturno da seção de perguntas (src/components/Saturno.tsx), em violeta sobre o preto do site.
+       Anel e folga mais grossos que no site, para o anel não sumir a 16 px. -->
+  <defs>
+    <clipPath id="cima"><rect x="-400" y="-400" width="800" height="404" /></clipPath>
+    <clipPath id="baixo"><rect x="-400" y="0" width="800" height="400" /></clipPath>
+    <clipPath id="perto"><circle r="128" /></clipPath>
+  </defs>
+  <rect x="-240" y="-240" width="480" height="480" fill="#08070b" />
+  <g transform="rotate(-20)">
+    <ellipse rx="200" ry="52" fill="none" stroke="#7a59ff" stroke-width="40" clip-path="url(#cima)" />
+    <circle r="108" fill="#7a59ff" stroke="#08070b" stroke-width="20" paint-order="stroke" />
+    <g clip-path="url(#baixo)">
+      <ellipse rx="200" ry="52" fill="none" stroke="#08070b" stroke-width="60" clip-path="url(#perto)" />
+    </g>
+    <ellipse rx="200" ry="52" fill="none" stroke="#7a59ff" stroke-width="40" clip-path="url(#baixo)" />
+  </g>
 </svg>

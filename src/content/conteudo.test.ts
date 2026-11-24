@@ -6,7 +6,7 @@ import { problemasParaPublicar } from '../lib/publicacao.ts'
 import { linkWhatsApp } from '../lib/whatsapp.ts'
 import { idiomas } from './idiomas.ts'
 import { projetos } from './projetos.ts'
-import { comoTrabalho, contatos, fatos, habilidades, pendencias, rodape, seo, site, whatsapp } from './site.ts'
+import { comoTrabalho, contatos, fatos, habilidades, pendencias, perguntas, rodape, seo, site, whatsapp } from './site.ts'
 
 describe('projetos', () => {
   it('são os 3 combinados, na ordem da fita', () => {
@@ -81,6 +81,36 @@ describe('site', () => {
     expect(comoTrabalho.passos.map((p) => p.titulo)).toEqual(['Conversa', 'Rascunho', 'Ajustes', 'Desenvolvimento', 'No ar'])
   })
 
+  it('a demonstração tem 5 cores legíveis com texto branco, 4 letras, 3 cantos e 3 fundos', () => {
+    // contraste da WCAG entre a cor e o branco: o botão da janela de exemplo leva texto branco
+    const luz = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => {
+        const c = parseInt(hex.slice(i, i + 2), 16) / 255
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    expect(comoTrabalho.cores.map((c) => c.id)).toEqual(['violeta', 'verde', 'cafe', 'rosa', 'petroleo'])
+    for (const c of comoTrabalho.cores) {
+      expect(c.valor, c.nome).toMatch(/^#[0-9a-f]{6}$/)
+      expect(1.05 / (luz(c.valor) + 0.05), c.nome).toBeGreaterThanOrEqual(4.5)
+    }
+    expect(comoTrabalho.letras.map((l) => l.id)).toEqual(['moderna', 'marcante', 'classica', 'codigo'])
+    expect(comoTrabalho.letras.map((l) => l.fonte)).toEqual(['Instrument Sans', 'Anton', 'Instrument Serif', 'JetBrains Mono'])
+    expect(comoTrabalho.cantos.map((c) => [c.id, c.valor])).toEqual([
+      ['retos', '0'],
+      ['suaves', '8px'],
+      ['redondos', '999px'],
+    ])
+    expect(comoTrabalho.fundos.map((f) => [f.id, f.valor])).toEqual([
+      ['claro', '#ffffff'],
+      ['creme', '#f8f3ea'],
+      ['escuro', '#1b1a21'],
+    ])
+    expect(comoTrabalho.rotulos).toEqual({ cor: 'Cor', letra: 'Letra', cantos: 'Cantos', fundo: 'Fundo' })
+    expect(comoTrabalho.padrao).toEqual({ cor: 'violeta', letra: 'moderna', cantos: 'suaves', fundo: 'claro' })
+  })
+
   it('a descrição para o Google tem de 70 a 160 letras', () => {
     expect(seo.descricao.length).toBeGreaterThanOrEqual(70)
     expect(seo.descricao.length).toBeLessThanOrEqual(160)
@@ -96,12 +126,27 @@ describe('site', () => {
     expect(blueprint).toMatch(new RegExp(`^ {4}domains:\\r?\\n {6}- ${dominio}\\r?$`, 'm'))
   })
 
+  it('as perguntas frequentes são as 6 aprovadas, com os valores do Rafa', () => {
+    expect(perguntas.titulo).toBe('Perguntas frequentes')
+    expect(perguntas.itens.map((i) => i.pergunta)).toEqual([
+      'Quanto tempo leva para o site ficar pronto?',
+      'Quanto custa?',
+      'Preciso pagar domínio e hospedagem?',
+      'Consigo mudar o site depois?',
+      'O site aparece no Google?',
+      'Como é o pagamento?',
+    ])
+    const valores = ['5 dias', 'R$ 350', 'R$ 40 por ano', 'R$ 50', 'Perfil da Empresa no Google', 'Metade no início e metade na entrega']
+    perguntas.itens.forEach((item, n) => expect(item.resposta).toContain(valores[n]))
+  })
+
   it('o Rafa liberou todos os contatos (17/11/2026)', () => {
     expect(contatos.filter((c) => !c.confirmado).map((c) => c.id)).toEqual([])
   })
 
-  it('o rodapé leva ao código do portfólio no GitHub, e o repositório saiu das pendências', () => {
-    expect(rodape.codigo).toBe('https://github.com/RafaWanderert/portfolio')
+  it('o rodapé não leva mais ao código do site (o Rafa tirou em 24/11/2026)', () => {
+    expect(rodape).not.toHaveProperty('codigo')
+    expect(rodape).not.toHaveProperty('textoCodigo')
     expect(pendencias.filter((p) => p.includes('repositório'))).toEqual([])
   })
 

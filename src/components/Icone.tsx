@@ -40,23 +40,9 @@ const desenhos = {
       <circle cx="12" cy="10.5" r="2.2" />
     </>
   ),
-  conversa: <path d="M4 5h16v11H10l-5 4v-4H4zM8 9h8M8 12h5" />,
-  rascunho: <path d="M4 20l1-4.5L16.5 4 20 7.5 8.5 19zM14 6.5l3.5 3.5" />,
-  ajustes: (
-    <>
-      <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
-      <circle cx="15" cy="7" r="2" />
-      <circle cx="9" cy="17" r="2" />
-    </>
-  ),
-  codigo: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14" />,
-  foguete: (
-    <>
-      <path d="M12 3c3.2 2.2 5 6 5 10l-2 3H9l-2-3c0-4 1.8-7.8 5-10z" />
-      <circle cx="12" cy="10" r="1.6" />
-      <path d="M10 16l-1 4.5 3-1.5 3 1.5-1-4.5" />
-    </>
-  ),
+  // cadeado da barra de endereço e menu do celular, na janela de exemplo do "Como trabalho"
+  cadeado: <path d="M6.5 11h11v9h-11zM9 11V8a3 3 0 0 1 6 0v3" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
 } satisfies Record<string, ReactNode>
 
 export type NomeIcone = keyof typeof desenhos

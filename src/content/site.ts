@@ -135,43 +135,100 @@ export const habilidades = {
   ],
 }
 
-/** Nome do desenho que acompanha cada passo (os desenhos ficam em src/components/Icone.tsx). */
-export type IconePasso = 'conversa' | 'rascunho' | 'ajustes' | 'codigo' | 'foguete'
+/** Cores que o visitante pode escolher na janela de exemplo. Todas aceitam texto branco por cima. */
+export type IdCor = 'violeta' | 'verde' | 'cafe' | 'rosa' | 'petroleo'
+/** Letra do título na janela de exemplo (a fonte de cada uma está em comoTrabalho.letras). */
+export type IdLetra = 'moderna' | 'marcante' | 'classica' | 'codigo'
+/** Cantos do botão, da marca, da imagem e dos cartões da página de exemplo. */
+export type IdCantos = 'retos' | 'suaves' | 'redondos'
+/** Fundo da página de exemplo (a conversa e o rascunho continuam no papel branco). */
+export type IdFundo = 'claro' | 'creme' | 'escuro'
+/** O que o visitante escolhe no passo "Ajustes". */
+export type Ajustes = { cor: IdCor; letra: IdLetra; cantos: IdCantos; fundo: IdFundo }
 
-export const comoTrabalho: { titulo: string; passos: { titulo: string; texto: string; icone: IconePasso }[] } = {
+/**
+ * "Como trabalho": o visitante escreve o nome do negócio e vê um site de exemplo nascer nos cinco passos.
+ * O primeiro balão da conversa termina com ": {nome}." quando a pessoa escreveu um nome.
+ * Cores e fundos também ficam em src/index.css ([data-cor], [data-fundo]); o teste da seção confere se batem.
+ * Os valores de cantos e fundos aparecem no código do passo 4.
+ */
+export const comoTrabalho: {
+  titulo: string
+  texto: string
+  campo: { rotulo: string; exemplo: string; max: number }
+  passos: { titulo: string; texto: string }[]
+  rotulos: Record<keyof Ajustes, string>
+  cores: { id: IdCor; nome: string; valor: string }[]
+  letras: { id: IdLetra; nome: string; fonte: string }[]
+  cantos: { id: IdCantos; nome: string; valor: string }[]
+  fundos: { id: IdFundo; nome: string; valor: string }[]
+  padrao: Ajustes
+  acao: string
+  aviso: string
+  pausa: { pausar: string; continuar: string; deNovo: string }
+  janela: {
+    conversa: [string, string]
+    menu: string[]
+    texto: string
+    botao: string
+    cartoes: { titulo: string; texto: string }[]
+  }
+} = {
   titulo: 'Como trabalho',
+  texto: 'Seu negócio ainda não tem site? Escreva o nome dele e veja, passo a passo, como ele sai do papel.',
+  campo: { rotulo: 'Nome do seu negócio', exemplo: 'Ex.: Padaria do Zé', max: 40 },
   passos: [
-    {
-      titulo: 'Conversa',
-      texto: 'Entendo o seu negócio, o seu público e o que o site precisa resolver.',
-      icone: 'conversa',
-    },
-    {
-      titulo: 'Rascunho',
-      texto: 'Monto a primeira versão visual para você ver antes de qualquer compromisso.',
-      icone: 'rascunho',
-    },
-    {
-      titulo: 'Ajustes',
-      texto: 'Você diz o que mudar e eu refino até ficar do seu jeito.',
-      icone: 'ajustes',
-    },
+    { titulo: 'Conversa', texto: 'Entendo o seu negócio, o seu público e o que o site precisa resolver.' },
+    { titulo: 'Rascunho', texto: 'Monto a primeira versão visual para você ver antes de qualquer compromisso.' },
+    { titulo: 'Ajustes', texto: 'Você diz o que mudar e eu refino até ficar do seu jeito.' },
     {
       titulo: 'Desenvolvimento',
       texto: 'Programo o site para abrir rápido, funcionar no celular e aparecer no Google.',
-      icone: 'codigo',
     },
-    {
-      titulo: 'No ar',
-      texto: 'Publico, testo e entrego tudo funcionando.',
-      icone: 'foguete',
-    },
+    { titulo: 'No ar', texto: 'Publico, testo e entrego tudo funcionando, no endereço do seu negócio.' },
   ],
-}
-
-export const chamada = {
-  texto: ['Seu negócio ainda não tem site?', 'Me conte o que você precisa.'],
+  rotulos: { cor: 'Cor', letra: 'Letra', cantos: 'Cantos', fundo: 'Fundo' },
+  cores: [
+    { id: 'violeta', nome: 'Violeta', valor: '#6f4bff' },
+    { id: 'verde', nome: 'Verde', valor: '#15803d' },
+    { id: 'cafe', nome: 'Café', valor: '#92400e' },
+    { id: 'rosa', nome: 'Rosa', valor: '#be185d' },
+    { id: 'petroleo', nome: 'Petróleo', valor: '#0e7490' },
+  ],
+  letras: [
+    { id: 'moderna', nome: 'Moderna', fonte: 'Instrument Sans' },
+    { id: 'marcante', nome: 'Marcante', fonte: 'Anton' },
+    { id: 'classica', nome: 'Clássica', fonte: 'Instrument Serif' },
+    { id: 'codigo', nome: 'Código', fonte: 'JetBrains Mono' },
+  ],
+  cantos: [
+    { id: 'retos', nome: 'Retos', valor: '0' },
+    { id: 'suaves', nome: 'Suaves', valor: '8px' },
+    { id: 'redondos', nome: 'Redondos', valor: '999px' },
+  ],
+  fundos: [
+    { id: 'claro', nome: 'Claro', valor: '#ffffff' },
+    { id: 'creme', nome: 'Creme', valor: '#f8f3ea' },
+    { id: 'escuro', nome: 'Escuro', valor: '#1b1a21' },
+  ],
+  padrao: { cor: 'violeta', letra: 'moderna', cantos: 'suaves', fundo: 'claro' },
   acao: 'Pedir um site',
+  aviso: 'Exemplo ilustrativo. Cada site é feito do zero, para o negócio de quem pede.',
+  pausa: { pausar: 'Pausar', continuar: 'Continuar', deNovo: 'Ver de novo' },
+  janela: {
+    conversa: [
+      'Oi, Rafael! Quero um site para o meu negócio',
+      'Vamos lá! Me conte quem são os seus clientes e o que eles procuram.',
+    ],
+    menu: ['Início', 'Sobre', 'Contato'],
+    texto: 'Conheça o nosso trabalho e fale com a gente pelo WhatsApp.',
+    botao: 'Chamar no WhatsApp',
+    cartoes: [
+      { titulo: 'Sobre', texto: 'Quem somos e como atendemos.' },
+      { titulo: 'Serviços', texto: 'O que você encontra aqui.' },
+      { titulo: 'Contato', texto: 'Endereço, horários e WhatsApp.' },
+    ],
+  },
 }
 
 export const contato = {
@@ -179,12 +236,43 @@ export const contato = {
   texto: 'Estou disponível para novos projetos. Me chame pelo canal que preferir.',
 }
 
+/** Perguntas frequentes, com as respostas do Rafa (aprovadas em 23/11/2026). Mudar um valor aqui muda no site. */
+export const perguntas: { titulo: string; itens: { pergunta: string; resposta: string }[] } = {
+  titulo: 'Perguntas frequentes',
+  itens: [
+    {
+      pergunta: 'Quanto tempo leva para o site ficar pronto?',
+      resposta: 'Em média 5 dias, da nossa primeira conversa até o site no ar.',
+    },
+    {
+      pergunta: 'Quanto custa?',
+      resposta: 'A partir de R$ 350. O valor final depende do tamanho do site: me chame no WhatsApp que eu passo o orçamento.',
+    },
+    {
+      pergunta: 'Preciso pagar domínio e hospedagem?',
+      resposta:
+        'O domínio (.com.br) fica no seu nome e custa cerca de R$ 40 por ano no Registro.br. A hospedagem também fica no seu nome, no Render, e para um site como esse o plano gratuito costuma bastar.',
+    },
+    {
+      pergunta: 'Consigo mudar o site depois?',
+      resposta:
+        'Sim. Uma alteração depois de pronto custa R$ 50. Se você precisa de atualizações com frequência, existe um plano mensal: é só me chamar para combinar.',
+    },
+    {
+      pergunta: 'O site aparece no Google?',
+      resposta:
+        'Sim. Ele é feito para o Google encontrar, e eu cadastro o seu negócio no Perfil da Empresa no Google (o antigo Google Meu Negócio).',
+    },
+    {
+      pergunta: 'Como é o pagamento?',
+      resposta: 'Metade no início e metade na entrega.',
+    },
+  ],
+}
+
 export const rodape = {
   direitos: `© 2026 ${site.nome}`,
   topo: 'Voltar ao topo',
-  /** Endereço do código deste site no GitHub (repositório público, criado em 17/11/2026). */
-  codigo: 'https://github.com/RafaWanderert/portfolio' as string | undefined,
-  textoCodigo: 'Ver o código deste site',
 }
 
 /** O que falta no site como um todo antes de publicar (os contatos e os projetos têm as suas). */

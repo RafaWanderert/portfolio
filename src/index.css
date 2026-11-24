@@ -50,6 +50,8 @@
   --titulo: 'Anton', Impact, 'Arial Narrow', sans-serif;
   --mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --sans: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* só na demonstração "Como trabalho" (a letra Clássica da página de exemplo) */
+  --serifa: 'Instrument Serif', Georgia, 'Times New Roman', serif;
 
   /* tamanhos */
   --t-rotulo: 0.75rem;
@@ -227,16 +229,40 @@ p {
   height: 1px;
 }
 
-/* Botão principal: roxo cheio, texto branco, cantos retos */
+/*
+ * Botão principal: vidro escuro, cantos retos ("dark neon lens", escolhido pelo Rafa em 23/11/2026).
+ * Parado: reflexo em cima e um fio violeta fraco, para continuar parecendo a ação da página.
+ * Mouse em cima: o fio neon (::before) acende e gira, uma faixa de luz (::after) passa uma vez
+ * pelo vidro e acende um brilho violeta. Foco e toque: o fio acende parado. Só CSS (CSP do site).
+ */
+@property --giro {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes girar {
+  to {
+    --giro: 360deg;
+  }
+}
 .botao {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   min-height: 52px;
   padding: 0 24px;
-  background: var(--roxo);
-  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+    #0d0b14;
+  color: var(--tinta);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(111, 75, 255, 0.35),
+    0 8px 24px rgba(0, 0, 0, 0.45);
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -245,8 +271,41 @@ p {
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
+    box-shadow 0.3s ease,
     transform 0.16s var(--ease-out);
+}
+/* o fio neon: um anel de 1px (a máscara deixa só a borda) com um trecho aceso que gira */
+.botao::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--giro),
+    transparent 0 55%,
+    #8f73ff 75%,
+    var(--roxo-claro) 82%,
+    transparent 92%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+/* a faixa de luz: espera fora do botão, à esquerda, e atravessa o vidro no mouse */
+.botao::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%, rgba(188, 175, 255, 0.22) 50%, transparent 65%);
+  transform: translateX(-120%);
+  pointer-events: none;
 }
 .botao .icone {
   transition: transform 0.25s var(--ease-out);
@@ -255,25 +314,41 @@ p {
 .botao:active {
   transform: scale(0.97);
 }
+/* teclado e toque (no celular não há mouse): o fio acende parado */
+.botao:focus-visible::before,
+.botao:active::before {
+  opacity: 1;
+}
 .botao--pequeno {
   min-height: 44px;
   padding: 0 18px;
   font-size: 0.9375rem;
 }
-/* sobre o bloco roxo, o botão inverte: claro com texto escuro */
-.botao--claro {
-  background: var(--tinta);
-  color: var(--fundo);
-}
 @media (hover: hover) and (pointer: fine) {
   .botao:hover {
-    background: var(--roxo-forte);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 0 28px rgba(111, 75, 255, 0.35),
+      0 8px 24px rgba(0, 0, 0, 0.45);
   }
-  .botao--claro:hover {
-    background: #fff;
+  .botao:hover::before {
+    opacity: 1;
+    animation: girar 2.4s linear infinite;
+  }
+  .botao:hover::after {
+    transform: translateX(120%);
+    transition: transform 0.7s var(--ease-out);
   }
   .botao:hover .icone {
     transform: translateX(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .botao:hover::before {
+    animation: none;
+  }
+  .botao::after {
+    display: none;
   }
 }
 
@@ -1299,11 +1374,13 @@ html:not(.js) .ficha:nth-child(4) {
   border-top: 1px solid var(--linha);
 }
 .dupla > .cruz:nth-of-type(1),
+.perguntas > .cruz:nth-of-type(1),
 .contato > .cruz:nth-of-type(1) {
   left: -6px;
   top: -7px;
 }
 .dupla > .cruz:nth-of-type(2),
+.perguntas > .cruz:nth-of-type(2),
 .contato > .cruz:nth-of-type(2) {
   right: -6px;
   top: -7px;
@@ -1377,112 +1454,9 @@ html:not(.js) .ficha:nth-child(4) {
   color: var(--suave);
 }
 
-/* ---- Como trabalho ---- */
-.processo {
-  grid-column: 1 / span 7;
-  padding: var(--bloco) 0;
-}
-.passos li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 3rem 44px minmax(0, 1fr);
-  align-items: start;
-  column-gap: 18px;
-  padding-bottom: 26px;
-}
-.passos li:last-child {
-  padding-bottom: 0;
-}
-/* a linha que liga um ícone ao próximo */
-.passos li:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  left: calc(3rem + 18px + 22px);
-  top: 44px;
-  bottom: 0;
-  width: 1px;
-  background: rgba(243, 240, 249, 0.24);
-}
-.passos__numero {
-  font-family: var(--titulo);
-  font-size: 1.75rem;
-  line-height: 44px;
-  color: var(--roxo);
-}
-.passos__icone {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--roxo);
-  border-radius: 50%;
-  color: var(--roxo-claro);
-}
-.passos__icone .icone {
-  width: 20px;
-  height: 20px;
-}
-.passos h3 {
-  margin: 1px 0 4px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  line-height: 1.4;
-  text-transform: uppercase;
-  color: var(--roxo-claro);
-}
-.passos p {
-  max-width: 48ch;
-  margin: 0;
-}
-
-/* ---- Chamada: o bloco roxo ---- */
-.chamada {
-  grid-column: 9 / -1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 40px;
-  padding: clamp(28px, 3vw, 48px);
-  background: var(--roxo);
-  color: #fff;
-}
-.chamada__texto {
-  margin: 0;
-  padding-right: 24px;
-  font-size: clamp(1.5rem, 1.05rem + 1.7vw, 2.25rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  text-wrap: balance;
-}
-.chamada__texto span {
-  display: block;
-}
-.chamada__texto span + span {
-  margin-top: 0.5em;
-}
-.chamada .botao {
-  align-self: flex-start;
-}
-.chamada :focus-visible {
-  outline-color: #fff;
-}
-.chamada .cruz {
-  right: 18px;
-  top: 18px;
-}
-.chamada .cruz::before,
-.chamada .cruz::after {
-  background: #fff;
-}
-
 @media (max-width: 1099px) {
   .sobre,
-  .habilidades,
-  .processo,
-  .chamada {
+  .habilidades {
     grid-column: 1 / -1;
   }
   .sobre {
@@ -1492,13 +1466,6 @@ html:not(.js) .ficha:nth-child(4) {
     padding: 0 0 var(--bloco);
     border-left: 0;
   }
-  .processo {
-    padding-bottom: clamp(40px, 6vw, 64px);
-  }
-  .chamada {
-    min-height: 260px;
-    margin-bottom: var(--bloco);
-  }
 }
 @media (max-width: 699px) {
   .habilidades__grupo {
@@ -1507,12 +1474,1226 @@ html:not(.js) .ficha:nth-child(4) {
   .habilidades__grupo h3 {
     padding-top: 0;
   }
-  .passos li {
-    grid-template-columns: 2.25rem 44px minmax(0, 1fr);
-    column-gap: 14px;
+}
+
+/* ============================== Como trabalho: o site de exemplo nascendo ============================== */
+/* À esquerda, a frase, o campo do nome e os cinco passos; à direita, uma janela de navegador onde o site
+   de exemplo do visitante nasce passo a passo (src/components/ComoTrabalho.tsx e Janela.tsx). */
+.estudio {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(16px, 2vw, 32px);
+  row-gap: clamp(32px, 3.4vw, 48px);
+  align-items: start;
+  margin: 0 var(--margem);
+  padding: clamp(56px, 6.4vw, 108px) 0;
+  border-top: 1px solid var(--linha);
+}
+.estudio > .cruz:nth-of-type(1) {
+  left: -6px;
+  top: -7px;
+}
+.estudio > .cruz:nth-of-type(2) {
+  right: -6px;
+  top: -7px;
+}
+.estudio__cabeca {
+  grid-column: 1 / span 5;
+  grid-row: 1;
+}
+.estudio__passos {
+  grid-column: 1 / span 5;
+  grid-row: 2;
+}
+/* A janela não fica presa ao rolar: num notebook baixo (1366×768) ela não caberia inteira
+   e os controles de cor, letra e pausa sumiriam embaixo da tela. */
+.estudio__janela {
+  grid-column: 6 / -1;
+  grid-row: 1 / span 2;
+  padding-left: clamp(0px, 2.6vw, 56px);
+  /* os ajustes embaixo da janela se arrumam pela largura desta coluna */
+  container: vitrine / inline-size;
+}
+.estudio .titulo {
+  margin-bottom: clamp(20px, 2vw, 28px);
+}
+.estudio__texto {
+  max-width: 30ch;
+  margin: 0 0 clamp(24px, 2.6vw, 36px);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+/* ---- O campo do nome ---- */
+.campo label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+}
+.campo input {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px;
+  border: 1px solid rgba(243, 240, 249, 0.28);
+  background: rgba(243, 240, 249, 0.03);
+  color: var(--tinta);
+  /* 18px: o iPhone não dá zoom ao tocar no campo */
+  font-size: 1.125rem;
+  caret-color: var(--roxo-claro);
+  transition: border-color 0.2s var(--ease-out);
+}
+.campo input::placeholder {
+  color: var(--suave);
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .campo input:hover {
+    border-color: rgba(243, 240, 249, 0.5);
   }
-  .passos li:not(:last-child)::before {
-    left: calc(2.25rem + 14px + 22px);
+}
+
+/* ---- Os cinco passos ---- */
+.etapas {
+  border-bottom: 1px solid var(--linha);
+}
+.etapa {
+  position: relative;
+  border-top: 1px solid var(--linha);
+}
+.etapa__botao {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  width: 100%;
+  min-height: 60px;
+  padding: 16px 0;
+  color: var(--suave);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s var(--ease-out);
+}
+.etapa__numero {
+  flex: none;
+  width: 2.25rem;
+  font-family: var(--titulo);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--apagado);
+  transition: color 0.2s var(--ease-out);
+}
+.etapa__titulo {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.etapa--ativa .etapa__botao {
+  color: var(--tinta);
+}
+.etapa--ativa .etapa__numero {
+  color: var(--roxo);
+}
+@media (hover: hover) and (pointer: fine) {
+  .etapa__botao:hover {
+    color: var(--tinta);
+  }
+}
+/* A barrinha do passo ativo marca o tempo da demonstração: quando enche, entra o passo seguinte
+   (src/hooks/useDemonstracao.ts). Ela corre por cima da linha de baixo do passo. */
+.etapa__barra {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--roxo);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: encher 3.6s linear forwards paused;
+  pointer-events: none;
+}
+/* os Ajustes ficam mais tempo: dá para ver as quatro trocas (cor, letra, cantos e fundo) */
+.etapa__botao[data-etapa='3'] .etapa__barra {
+  animation-duration: 6s;
+}
+.etapas[data-andando='true'] .etapa__barra {
+  animation-play-state: running;
+}
+@keyframes encher {
+  to {
+    transform: scaleX(1);
+  }
+}
+.etapa__corpo {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.etapa__corpo > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.etapa__corpo p {
+  max-width: 46ch;
+  margin: 0;
+  padding: 0 0 20px calc(2.25rem + 16px);
+}
+/* Com JavaScript, só o passo ativo fica aberto; sem ele, os cinco textos ficam à mostra.
+   Abre um pouco mais devagar do que fecha. */
+.js .etapa__corpo {
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.2s var(--ease-out),
+    visibility 0s linear 0.2s;
+}
+.js .etapa__corpo > div {
+  opacity: 0;
+  transition: opacity 0.15s var(--ease-out);
+}
+.js .etapa--ativa .etapa__corpo {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows 0.32s var(--ease-out),
+    visibility 0s;
+}
+.js .etapa--ativa .etapa__corpo > div {
+  opacity: 1;
+  transition: opacity 0.3s var(--ease-out) 0.06s;
+}
+
+/* ---- Embaixo da janela: os ajustes da página de exemplo (cor, letra, cantos, fundo) e a pausa ----
+   Estreito (celular): um grupo por linha, com Cantos e Fundo lado a lado.
+   Largo: dois andares, "Cor | Letra" em cima e "Cantos | Fundo | Pausar" embaixo. */
+.estudio__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 28px;
+  margin-top: 16px;
+}
+@container vitrine (min-width: 620px) {
+  .estudio__controles {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      'cor letra letra'
+      'cantos fundo pausa';
+    align-items: end;
+  }
+  .ajuste--cor {
+    grid-area: cor;
+  }
+  .ajuste--letra {
+    grid-area: letra;
+  }
+  .ajuste--cantos {
+    grid-area: cantos;
+  }
+  .ajuste--fundo {
+    grid-area: fundo;
+  }
+  .estudio__controles .estudio__pausa {
+    grid-area: pausa;
+    justify-self: end;
+  }
+}
+.ajuste {
+  min-width: 0;
+}
+.ajuste legend {
+  margin-bottom: 2px;
+  font-size: var(--t-pequeno);
+  line-height: 1.4;
+  color: var(--suave);
+}
+.ajuste__opcoes {
+  display: flex;
+}
+.amostra {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  vertical-align: top;
+  cursor: pointer;
+}
+.amostra::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  background: var(--cor);
+  box-shadow: inset 0 0 0 1px rgba(243, 240, 249, 0.2);
+  transition: transform 0.16s var(--ease-out);
+}
+/* a cor escolhida ganha um quadrado em volta */
+.amostra::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.5px solid var(--tinta);
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity 0.15s var(--ease-out),
+    transform 0.2s var(--ease-out);
+}
+.amostra:has(input:checked)::after {
+  opacity: 1;
+  transform: none;
+}
+/* Cantos: um botãozinho em contorno, com o canto de cada opção (a letra pequena deixa o "suave" discreto) */
+.ajuste--cantos .amostra::before {
+  width: 26px;
+  height: 16px;
+  border: 1.5px solid var(--suave);
+  border-radius: var(--ms-raio-botao);
+  background: none;
+  box-shadow: none;
+  font-size: 0.625rem;
+}
+/* Fundo: o papel de cada opção; o contorno claro deixa o Escuro visível sobre o preto do site */
+.ajuste--fundo .amostra::before {
+  background: var(--ms-papel);
+  box-shadow: inset 0 0 0 1px rgba(243, 240, 249, 0.32);
+}
+.amostra:active::before {
+  transform: scale(0.9);
+}
+@media (hover: hover) and (pointer: fine) {
+  .amostra:hover::after {
+    opacity: 0.4;
+    transform: none;
+  }
+  .amostra:has(input:checked):hover::after {
+    opacity: 1;
+  }
+}
+.opcao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(243, 240, 249, 0.24);
+  color: var(--suave);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  vertical-align: top;
+  cursor: pointer;
+  transition:
+    color 0.2s var(--ease-out),
+    background-color 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out);
+}
+.opcao + .opcao {
+  margin-left: -1px;
+}
+/* cada letra aparece escrita nela mesma */
+.opcao[data-letra='marcante'] span {
+  font-family: var(--titulo);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.opcao[data-letra='classica'] span {
+  font-family: var(--serifa);
+  font-size: 1.125rem;
+  font-weight: 400;
+}
+.opcao[data-letra='codigo'] span {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.opcao:has(input:checked) {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: var(--fundo);
+}
+@media (hover: hover) and (pointer: fine) {
+  .opcao:hover {
+    color: var(--tinta);
+  }
+  .opcao:has(input:checked):hover {
+    color: var(--fundo);
+  }
+}
+/* o botão de rádio fica por cima da amostra, invisível: o clique e o teclado continuam funcionando */
+.amostra input,
+.opcao input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.amostra:has(input:focus-visible),
+.opcao:has(input:focus-visible) {
+  outline: 2px solid var(--roxo-claro);
+  outline-offset: 2px;
+}
+
+/* ---- Pedir um site ---- */
+.estudio__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  margin-top: clamp(28px, 3vw, 40px);
+}
+.estudio__pausa {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--suave);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.2s var(--ease-out),
+    transform 0.16s var(--ease-out);
+}
+.estudio__pausa .icone {
+  width: 18px;
+  height: 18px;
+}
+.estudio__pausa:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .estudio__pausa:hover {
+    color: var(--tinta);
+  }
+}
+.estudio__aviso {
+  margin: 6px 0 0;
+  /* texto corrido: 16px no mínimo, como no resto do site */
+  font-size: 1rem;
+  color: var(--suave);
+}
+/* sem JavaScript: os textos dos passos ficam à mostra e o que só funciona com ele some */
+html:not(.js) .etapa__barra,
+html:not(.js) .estudio__controles {
+  display: none;
+}
+
+/* ---- A janela de navegador ---- */
+/* As cores que o visitante escolhe. São as mesmas de src/content/site.ts (o teste confere). */
+[data-cor='violeta'] {
+  --cor: #6f4bff;
+}
+[data-cor='verde'] {
+  --cor: #15803d;
+}
+[data-cor='cafe'] {
+  --cor: #92400e;
+}
+[data-cor='rosa'] {
+  --cor: #be185d;
+}
+[data-cor='petroleo'] {
+  --cor: #0e7490;
+}
+.janela {
+  /* a página de exemplo é um site de cliente: clara, com a cor que o visitante escolhe */
+  --ms-papel: #fff;
+  --ms-fundo: #f6f5f9;
+  --ms-tinta: #17151d;
+  --ms-suave: #5d5a66;
+  --ms-linha: #e4e2ea;
+  --ms-rascunho: #8b8896;
+  --ms-traco: #b9b6c2;
+  /* texto na cor escolhida (a letra grande da imagem e os títulos dos cartões) */
+  --ms-cor-texto: var(--cor);
+  border: 1px solid rgba(243, 240, 249, 0.16);
+  background: #13111a;
+}
+/* Os cantos que o visitante escolhe: botão, marca, imagem e cartões da página de exemplo.
+   No código do passo 4 eles aparecem como 0, 8px e 999px (src/content/site.ts). */
+.janela[data-cantos='retos'],
+.amostra[data-cantos='retos'] {
+  --ms-raio-botao: 0;
+  --ms-raio-marca: 0;
+  --ms-raio-imagem: 0;
+  --ms-raio-cartao: 0;
+}
+.janela[data-cantos='suaves'],
+.amostra[data-cantos='suaves'] {
+  --ms-raio-botao: 0.35em;
+  --ms-raio-marca: 0.35em;
+  --ms-raio-imagem: 0.6em;
+  --ms-raio-cartao: 0.45em;
+}
+.janela[data-cantos='redondos'],
+.amostra[data-cantos='redondos'] {
+  --ms-raio-botao: 1.35em;
+  --ms-raio-marca: 1em;
+  --ms-raio-imagem: 1.6em;
+  --ms-raio-cartao: 1em;
+}
+/* O fundo da página de exemplo (papel, tinta, texto suave e linhas). Tinta e texto suave passam de 4,5:1
+   sobre cada papel (o teste confere). A conversa do passo 1 e o rascunho do passo 2 continuam no papel
+   branco: por isso o Claro vem por último, junto do passo 2. */
+.janela[data-fundo='creme'] .janela__pagina,
+.amostra[data-fundo='creme'] {
+  --ms-papel: #f8f3ea;
+  --ms-tinta: #2a2118;
+  --ms-suave: #6b5f50;
+  --ms-linha: #e7dccb;
+}
+.janela[data-fundo='escuro'] .janela__pagina,
+.amostra[data-fundo='escuro'] {
+  --ms-papel: #1b1a21;
+  --ms-tinta: #f1eff6;
+  --ms-suave: #a6a2b1;
+  --ms-linha: #2e2c36;
+  /* no escuro, o texto na cor escolhida clareia para continuar legível */
+  --ms-cor-texto: color-mix(in oklab, var(--cor) 60%, #fff);
+}
+.janela[data-fundo='claro'] .janela__pagina,
+.amostra[data-fundo='claro'],
+.janela[data-passo='2'] .janela__pagina {
+  --ms-papel: #ffffff;
+  --ms-tinta: #17151d;
+  --ms-suave: #5d5a66;
+  --ms-linha: #e4e2ea;
+  --ms-cor-texto: var(--cor);
+}
+.janela__barra {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 3fr) 1fr;
+  align-items: center;
+  gap: 12px;
+  height: 42px;
+  padding: 0 14px;
+}
+.janela__pontos {
+  display: flex;
+  gap: 7px;
+}
+.janela__pontos i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3a3746;
+}
+.janela__endereco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 5px;
+  background: #0b0a10;
+  color: var(--suave);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+/* o endereço novo aparece entrando em foco (o React troca o elemento a cada endereço) */
+.janela__endereco span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: endereco 0.35s var(--ease-out);
+}
+.janela__endereco .icone {
+  width: 13px;
+  height: 13px;
+  color: var(--roxo-claro);
+  animation: cadeado 0.4s var(--ease-out);
+}
+@keyframes endereco {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(3px);
+  }
+}
+@keyframes cadeado {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: scale(0.8);
+  }
+}
+.janela__corpo {
+  position: relative;
+  /* no computador, 4:3 equilibra a janela com a coluna dos passos ao lado */
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--ms-fundo);
+  color: var(--ms-tinta);
+  container: corpo / inline-size;
+}
+/* três camadas: a conversa (passo 1), o código (passo 4) e a página (do passo 2 em diante) */
+.janela__conversa,
+.janela__codigo,
+.janela__pagina {
+  position: absolute;
+  inset: 0;
+}
+
+/* Passo 1: a conversa. Os balões entram em foco; a resposta chega depois, como numa conversa. */
+.janela__conversa {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.4cqw;
+  padding: 6cqw 9cqw;
+  font-size: clamp(12px, 2.3cqw, 18px);
+}
+.balao {
+  max-width: 74%;
+  margin: 0;
+  padding: 0.75em 1.05em;
+  border-radius: 1.1em;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  transform: translateY(8px);
+  filter: blur(4px);
+  transition:
+    opacity 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    filter 0.2s var(--ease-out);
+}
+.balao--cliente {
+  align-self: flex-start;
+  border: 1px solid var(--ms-linha);
+  border-bottom-left-radius: 0.3em;
+  background: var(--ms-papel);
+}
+.balao--rafael {
+  align-self: flex-end;
+  border-bottom-right-radius: 0.3em;
+  background: var(--roxo);
+  color: #fff;
+}
+.janela[data-passo='1'] .balao {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  transition:
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out),
+    filter 0.45s var(--ease-out);
+}
+.janela[data-passo='1'] .balao--rafael {
+  transition-delay: 0.6s;
+}
+
+/* Passo 4: o código da página, com o nome, a cor e a letra que a pessoa escolheu */
+.janela__codigo {
+  right: auto;
+  width: 56%;
+  margin: 0;
+  padding: 4.5cqw 3.5cqw;
+  overflow: hidden;
+  background: #0f0e15;
+  color: var(--suave);
+  font-family: var(--mono);
+  font-size: clamp(9px, 1.55cqw, 13px);
+  line-height: 1.8;
+  white-space: pre;
+  counter-reset: linha;
+  opacity: 0;
+  transform: translateX(-12px);
+  filter: blur(4px);
+  transition:
+    opacity 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    filter 0.2s var(--ease-out);
+}
+.janela__codigo code {
+  font: inherit;
+}
+.janela__codigo .linha {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.janela__codigo .linha::before {
+  counter-increment: linha;
+  content: counter(linha);
+  display: inline-block;
+  width: 2.6em;
+  color: var(--apagado);
+}
+.janela__codigo i {
+  font-style: normal;
+  color: var(--roxo-claro);
+}
+.janela__codigo b {
+  font-weight: 400;
+  color: var(--tinta);
+}
+.janela[data-passo='4'] .janela__codigo {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  transition:
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out),
+    filter 0.45s var(--ease-out);
+}
+
+/* Passos 2 a 5: a página de exemplo */
+.janela__pagina {
+  overflow: hidden;
+  background: var(--ms-papel);
+  container: pagina / inline-size;
+  opacity: 0;
+  transform: translateY(8px);
+  filter: blur(4px);
+  transition:
+    opacity 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out),
+    filter 0.2s var(--ease-out),
+    background-color 0.35s var(--ease-out);
+}
+.janela:not([data-passo='1']) .janela__pagina {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  transition:
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out),
+    filter 0.45s var(--ease-out),
+    background-color 0.35s var(--ease-out);
+}
+/* No passo 4 a página encolhe para a largura de um celular e se rearruma (consulta de contêiner).
+   A troca de largura é instantânea; um desfoque curto disfarça a página se rearrumando. */
+.janela[data-passo='4'] .janela__pagina {
+  left: 56%;
+  border-left: 1px solid var(--ms-linha);
+  animation: refluir-a 0.5s var(--ease-out);
+}
+.janela[data-passo='5'] .janela__pagina {
+  animation: refluir-b 0.5s var(--ease-out);
+}
+@keyframes refluir-a {
+  from {
+    opacity: 0.35;
+    filter: blur(4px);
+  }
+}
+@keyframes refluir-b {
+  from {
+    opacity: 0.35;
+    filter: blur(4px);
+  }
+}
+/* janela estreita (celular): o código fica em cima e a página embaixo */
+@container corpo (max-width: 519px) {
+  .janela__conversa {
+    gap: 3cqw;
+    padding: 8cqw 6cqw;
+    font-size: clamp(12px, 3.6cqw, 15px);
+  }
+  .balao {
+    max-width: 86%;
+  }
+  .janela__codigo {
+    inset: 0 0 auto 0;
+    width: auto;
+    height: 46%;
+    padding: 5cqw;
+    font-size: clamp(9px, 2.9cqw, 12px);
+    transform: translateY(-12px);
+  }
+  .janela[data-passo='4'] .janela__pagina {
+    left: 0;
+    top: 46%;
+    border-left: 0;
+    border-top: 1px solid var(--ms-linha);
+  }
+}
+
+/* ---- O site de exemplo, dentro da janela (tamanhos em cqw: ele cresce e encolhe com a janela) ---- */
+.ms {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 4.5cqw;
+  font-size: 1.9cqw;
+  line-height: 1.4;
+  color: var(--ms-tinta);
+}
+.ms__topo {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2em;
+  height: 4.4em;
+  border-bottom: 1px solid var(--ms-linha);
+}
+.ms__marca {
+  display: flex;
+  align-items: center;
+  gap: 0.65em;
+  min-width: 0;
+  font-weight: 700;
+}
+.ms__marca b {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2em;
+  height: 2em;
+  border-radius: var(--ms-raio-marca);
+  background: var(--cor);
+  color: #fff;
+  font-size: 0.9em;
+}
+.ms__marca span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ms__menu {
+  display: flex;
+  flex: none;
+  gap: 1.8em;
+  margin-left: auto;
+  color: var(--ms-suave);
+}
+.ms__hamburguer {
+  display: none;
+  width: 1.7em;
+  height: 1.7em;
+  margin-left: auto;
+}
+.ms__capa {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 4cqw;
+  min-height: 0;
+  padding: 3cqw 0;
+}
+.ms__chamada {
+  align-self: center;
+}
+.ms__titulo {
+  display: -webkit-box;
+  margin: 0 0 0.4em;
+  /* o recorte em duas linhas não pode comer o acento das maiúsculas (É, Á, Ô) */
+  padding-top: 0.12em;
+  overflow: hidden;
+  font-size: 2.8em;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.janela[data-letra='marcante'] .ms__titulo {
+  padding-top: 0.2em;
+  font-family: var(--titulo);
+  font-size: 3.1em;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.04;
+  text-transform: uppercase;
+}
+/* a Instrument Serif é estreita e de olho pequeno: um pouco maior para pesar como as outras */
+.janela[data-letra='classica'] .ms__titulo {
+  font-family: var(--serifa);
+  font-size: 3.3em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+/* a letra de código é larga: um pouco menor, para o nome caber em duas linhas */
+.janela[data-letra='codigo'] .ms__titulo {
+  font-family: var(--mono);
+  font-size: 2.4em;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+.ms__texto {
+  max-width: 24em;
+  margin: 0 0 1.4em;
+  color: var(--ms-suave);
+}
+.ms__botao {
+  display: inline-flex;
+  align-items: center;
+  height: 2.7em;
+  padding: 0 1.3em;
+  border-radius: var(--ms-raio-botao);
+  background: var(--cor);
+  color: #fff;
+  font-weight: 600;
+}
+.ms__imagem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--ms-raio-imagem);
+  background: color-mix(in srgb, var(--cor) 13%, var(--ms-papel));
+}
+.ms__imagem b {
+  color: var(--ms-cor-texto);
+  font-size: 9em;
+  font-weight: 700;
+  line-height: 1;
+}
+.janela[data-letra='marcante'] .ms__imagem b {
+  font-family: var(--titulo);
+  font-weight: 400;
+}
+.janela[data-letra='classica'] .ms__imagem b {
+  font-family: var(--serifa);
+  font-weight: 400;
+}
+.janela[data-letra='codigo'] .ms__imagem b {
+  font-family: var(--mono);
+  font-weight: 700;
+}
+.ms__x {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--ms-traco);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out);
+}
+.ms__cartoes {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1em;
+  padding-bottom: 4cqw;
+}
+.ms__cartoes li {
+  display: grid;
+  gap: 0.25em;
+  padding: 1em 1.1em;
+  border-radius: var(--ms-raio-cartao);
+  background: color-mix(in srgb, var(--cor) 7%, var(--ms-papel));
+}
+.ms__cartoes b {
+  color: var(--ms-cor-texto);
+  font-weight: 700;
+}
+.ms__cartoes span {
+  color: var(--ms-suave);
+  font-size: 0.9em;
+  line-height: 1.35;
+}
+/* trocar a cor, os cantos ou o fundo transforma a página aos poucos, sem salto */
+.ms,
+.ms__topo,
+.ms__menu,
+.ms__texto,
+.ms__marca b,
+.ms__botao,
+.ms__imagem,
+.ms__imagem b,
+.ms__cartoes li,
+.ms__cartoes b,
+.ms__cartoes span {
+  transition:
+    background-color 0.35s var(--ease-out),
+    color 0.35s var(--ease-out),
+    border-color 0.35s var(--ease-out),
+    border-radius 0.35s var(--ease-out),
+    outline-color 0.35s var(--ease-out);
+}
+/* Passo 2: o rascunho, a traço tracejado e em letra de código, ainda sem cor */
+.janela[data-passo='2'] .ms {
+  color: var(--ms-rascunho);
+  font-family: var(--mono);
+}
+.janela[data-passo='2'] .ms__topo {
+  border-bottom-style: dashed;
+  border-color: var(--ms-traco);
+}
+.janela[data-passo='2'] .ms__menu {
+  color: var(--ms-rascunho);
+}
+.janela[data-passo='2'] .ms__marca b,
+.janela[data-passo='2'] .ms__botao,
+.janela[data-passo='2'] .ms__imagem,
+.janela[data-passo='2'] .ms__cartoes li {
+  outline: 1.5px dashed var(--ms-traco);
+  outline-offset: -1.5px;
+  background: transparent;
+  color: var(--ms-rascunho);
+}
+.janela[data-passo='2'] .ms__titulo,
+.janela[data-passo='2'] .ms__cartoes b {
+  color: var(--ms-rascunho);
+  font-family: var(--mono);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+.janela[data-passo='2'] .ms__titulo {
+  font-size: 2.3em;
+}
+.janela[data-passo='2'] .ms__imagem b {
+  opacity: 0;
+}
+.janela[data-passo='2'] .ms__x {
+  opacity: 1;
+}
+/* página estreita (o passo 4 no computador, ou a janela no celular): o site vira a versão de celular */
+@container pagina (max-width: 460px) {
+  .ms {
+    padding: 0 5cqw;
+    font-size: 3.7cqw;
+  }
+  .ms__menu {
+    display: none;
+  }
+  .ms__hamburguer {
+    display: block;
+  }
+  .ms__capa {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5cqw;
+    padding: 6cqw 0 5cqw;
+  }
+  .ms__imagem {
+    height: 30cqw;
+  }
+  .ms__imagem b {
+    font-size: 5em;
+  }
+  .ms__cartoes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.7em;
+  }
+}
+
+@media (max-width: 1099px) {
+  .estudio__cabeca,
+  .estudio__passos,
+  .estudio__janela {
+    grid-column: 1 / -1;
+  }
+  .estudio__janela {
+    grid-row: 2;
+    padding-left: 0;
+  }
+  .estudio__passos {
+    grid-row: 3;
+  }
+  .janela__corpo {
+    aspect-ratio: 16 / 9;
+  }
+}
+/* no celular a janela fica quadrada: assim ela e os passos cabem juntos na tela */
+@media (max-width: 699px) {
+  .janela__corpo {
+    aspect-ratio: 1;
+  }
+}
+
+/* "Reduzir movimento": as camadas só trocam com um esmaecer rápido, sem deslizar nem desfocar,
+   e os passos abrem na hora (a demonstração automática já fica desligada) */
+@media (prefers-reduced-motion: reduce) {
+  .balao,
+  .janela__codigo,
+  .janela__pagina,
+  .janela[data-passo='1'] .balao,
+  .janela[data-passo='4'] .janela__codigo,
+  .janela:not([data-passo='1']) .janela__pagina {
+    transform: none;
+    filter: none;
+    transition:
+      opacity 0.2s var(--ease-out),
+      background-color 0.35s var(--ease-out);
+  }
+  .janela[data-passo='1'] .balao--rafael {
+    transition-delay: 0s;
+  }
+  .janela[data-passo='4'] .janela__pagina,
+  .janela[data-passo='5'] .janela__pagina,
+  .janela__endereco span,
+  .janela__endereco .icone {
+    animation: none;
+  }
+  .js .etapa__corpo,
+  .js .etapa--ativa .etapa__corpo,
+  .js .etapa__corpo > div,
+  .js .etapa--ativa .etapa__corpo > div {
+    transition: none;
+  }
+}
+
+/* ============================== Perguntas frequentes ============================== */
+/* Mesmo desenho do Contato: título à esquerda, linhas finas à direita (alinhadas com as do Contato) */
+.perguntas {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(16px, 2vw, 32px);
+  align-items: start;
+  margin: 0 var(--margem);
+  padding: clamp(56px, 6.4vw, 108px) 0;
+  border-top: 1px solid var(--linha);
+}
+.perguntas__cabeca {
+  grid-column: 1 / span 4;
+}
+.perguntas__lista {
+  grid-column: 6 / -1;
+  border-top: 1px solid var(--linha);
+}
+.pergunta {
+  border-bottom: 1px solid var(--linha);
+}
+.pergunta summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 68px;
+  padding: 14px 0;
+  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.35;
+  list-style: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.pergunta summary::-webkit-details-marker {
+  display: none;
+}
+/* o sinal: duas linhas de 14px; a de pé some quando a pergunta está aberta (+ vira −) */
+.pergunta__sinal {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--roxo-claro);
+}
+.pergunta__sinal::before,
+.pergunta__sinal::after {
+  content: '';
+  position: absolute;
+  inset: 6.5px 0 auto;
+  height: 1px;
+  background: currentColor;
+}
+.pergunta__sinal::after {
+  transform: rotate(90deg);
+  transition: transform 0.3s var(--ease-out);
+}
+.pergunta[open] .pergunta__sinal::after {
+  transform: rotate(90deg) scaleX(0);
+}
+.pergunta__resposta p {
+  max-width: 62ch;
+  margin: 0;
+  padding: 0 38px 24px 0;
+  color: var(--suave);
+  line-height: 1.6;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pergunta summary:hover {
+    color: var(--roxo-claro);
+  }
+}
+/* Saturno na coluna vazia: flutua devagar e o anel balança (só enfeite) */
+.saturno {
+  display: block;
+  width: min(100%, 340px);
+  height: auto;
+  margin: clamp(48px, 6vw, 96px) auto 0;
+  overflow: visible;
+}
+.saturno__tinta {
+  stroke: var(--roxo);
+}
+.saturno__planeta {
+  fill: var(--roxo);
+  stroke: var(--fundo);
+  paint-order: stroke;
+}
+.saturno__folga {
+  stroke: var(--fundo);
+}
+.saturno__corpo {
+  animation: saturno-flutua 8s ease-in-out infinite alternate;
+}
+.saturno__anel {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: saturno-balanca 11s ease-in-out infinite alternate;
+}
+@keyframes saturno-flutua {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(-14px);
+  }
+}
+@keyframes saturno-balanca {
+  from {
+    transform: rotate(-4deg);
+  }
+  to {
+    transform: rotate(4deg);
+  }
+}
+/* abrir desliza, onde o navegador sabe animar a altura do conteúdo; nos outros, abre direto */
+@supports (interpolate-size: allow-keywords) {
+  .perguntas {
+    interpolate-size: allow-keywords;
+  }
+  .pergunta::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.35s var(--ease-out),
+      content-visibility 0.35s allow-discrete;
+  }
+  .pergunta[open]::details-content {
+    block-size: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .saturno__corpo,
+  .saturno__anel {
+    animation: none;
+  }
+  .pergunta::details-content,
+  .pergunta__sinal::after {
+    transition: none;
+  }
+}
+@media (max-width: 1099px) {
+  .perguntas__cabeca,
+  .perguntas__lista {
+    grid-column: 1 / -1;
+  }
+  .perguntas__cabeca {
+    margin-bottom: 28px;
+  }
+  /* aqui a coluna vira uma linha só, acima das perguntas: não sobra espaço vazio para o planeta */
+  .saturno {
+    display: none;
   }
 }
 
@@ -1522,20 +2703,6 @@ html:not(.js) .ficha:nth-child(4) {
   margin: 0 var(--margem);
   padding: clamp(56px, 6.4vw, 108px) 0 clamp(48px, 5vw, 80px);
   border-top: 1px solid var(--linha);
-  /* "cqw" lá dentro = porcentagem da largura desta seção */
-  container-type: inline-size;
-}
-/* o título ocupa a largura inteira: 7,16 é a largura de "VAMOS CONVERSAR" em "em", medida no navegador */
-.contato__titulo {
-  margin: 0;
-  font-family: var(--titulo);
-  font-size: calc(100cqw / 7.16);
-  font-weight: 400;
-  line-height: 0.92;
-  text-transform: uppercase;
-  white-space: nowrap;
-  /* se a fonte não carregar, a reserva é mais larga: o título é cortado em vez de criar rolagem lateral */
-  overflow-x: clip;
 }
 .contato__corpo {
   display: grid;
@@ -1620,14 +2787,6 @@ html:not(.js) .ficha:nth-child(4) {
   }
 }
 @media (max-width: 699px) {
-  /* no celular o título vai em duas linhas: 4,3 é a largura de "CONVERSAR" */
-  .contato__titulo {
-    font-size: calc(100cqw / 4.3);
-    white-space: normal;
-  }
-  .contato__titulo span {
-    display: block;
-  }
   .contato__linha {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     row-gap: 2px;

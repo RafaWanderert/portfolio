@@ -21,10 +21,11 @@ function dadosDoSite(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), dadosDoSite()],
-  // Testes da lógica (src/lib e src/content): rodam no Node, sem navegador.
+  // Testes da lógica (src/lib e src/content) e do HTML que o servidor entrega (src/components):
+  // rodam no Node, sem navegador. Os cliques são conferidos em scripts/teste-navegador.mjs.
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
     passWithNoTests: true,
   },
 })
